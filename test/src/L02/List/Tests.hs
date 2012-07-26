@@ -31,6 +31,7 @@ test =
     , testProperty "flatMap obeys law of associativity" prop_flatMap_associativity
     , testProperty "flatMap with id flattens" prop_flatMap_id_flattens
     , testProperty "flatMap obeys functor relationship" prop_flatMap_functor
+    , testProperty "seqf maps value across functions" prop_seqf
     , testProperty "reverse with single value" prop_rev_single_value
     , testProperty "appending reverse is equal to reversing appended" prop_rev_append
     ]
@@ -129,6 +130,14 @@ prop_flatMap_functor ::
   -> Bool
 prop_flatMap_functor (Fun _ f) x =
   maap f x == flatMap (\w -> f w :| Nil) x
+
+prop_seqf ::
+  List (Fun Int Int)
+  -> Int
+  -> Bool
+prop_seqf fs a = 
+  seqf funcs a == maap (flip ($) a) funcs
+    where funcs = maap (\(Fun _ f) -> f) fs
 
 prop_rev_single_value ::
   Int
