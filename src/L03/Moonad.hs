@@ -17,8 +17,8 @@ class Moonad m where
 -- Exercise 5
 -- Relative Difficulty: 1
 instance Moonad Id where
-  bind = error "todo"
-  reeturn = error "todo"
+  bind f (Id x) = f x
+  reeturn x = Id x
 
 -- Exercise 6
 -- Relative Difficulty: 2
