@@ -12,16 +12,17 @@ Install the Haskell dependency management system cabal:
 
     http://www.haskell.org/cabal/
 
-    (you will need to follow further instrucions)
+    (you will need to follow the additional instructions)
 
 Install tutorial dependencies:
 
-    cabal update
-    cabal install QuickCheck
-    cabal install test-framework-quickcheck2
-    cabal install test-framework-hunit
+    $ cabal update
+    $ cabal install QuickCheck
+    $ cabal install test-framework-quickcheck2
+    $ cabal install test-framework-hunit
 
 Type 'ghci' from the top level of this project.  This loads
-the .ghci file which references src/Course.hs
+the .ghci file which in turn references src/Course.hs -
+the source of goodness.
 
-You're off and running :-)
+With a bit of luck you're off and running :-)
