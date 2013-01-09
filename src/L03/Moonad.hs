@@ -23,20 +23,22 @@ instance Moonad Id where
 -- Exercise 6
 -- Relative Difficulty: 2
 instance Moonad List where
-  bind = error "todo"
-  reeturn = error "todo"
+  bind _ Nil = Nil
+  bind f (x :| xs) = append (f x) (bind f xs) 
+  reeturn x = x :| Nil
 
 -- Exercise 7
 -- Relative Difficulty: 2
 instance Moonad Optional where
-  bind = error "todo"
-  reeturn = error "todo"
+  bind _ Empty = Empty
+  bind f (Full x) = f x 
+  reeturn x = Full x
 
 -- Exercise 8
 -- Relative Difficulty: 3
 instance Moonad ((->) t) where
-  bind = error "todo"
-  reeturn = error "todo"
+  bind f g h = (f.g) h h
+  reeturn a _ = a
 
 -- Exercise 9
 -- Relative Difficulty: 2
