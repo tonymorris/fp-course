@@ -11,8 +11,7 @@ class Fuunctor f where
 -- Exercise 1
 -- Relative Difficulty: 1
 instance Fuunctor Id where
-  fmaap =
-    error "todo"
+  fmaap f (Id a) = Id (f a)
 
 -- Exercise 2
 -- Relative Difficulty: 2
