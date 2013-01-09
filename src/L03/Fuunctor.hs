@@ -16,8 +16,8 @@ instance Fuunctor Id where
 -- Exercise 2
 -- Relative Difficulty: 2
 instance Fuunctor List where
-  fmaap =
-    error "todo"
+  fmaap _ Nil = Nil
+  fmaap f (x :| xs) = (f x) :| fmaap f xs
 
 -- Exercise 3
 -- Relative Difficulty: 2
