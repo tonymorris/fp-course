@@ -22,8 +22,8 @@ instance Fuunctor List where
 -- Exercise 3
 -- Relative Difficulty: 2
 instance Fuunctor Optional where
-  fmaap =
-    error "todo"
+  fmaap _ Empty = Empty
+  fmaap f (Full a) = Full (f a)
 
 -- Exercise 4
 -- Relative Difficulty: 3
