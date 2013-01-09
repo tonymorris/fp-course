@@ -28,8 +28,7 @@ instance Fuunctor Optional where
 -- Exercise 4
 -- Relative Difficulty: 3
 instance Fuunctor ((->) t) where
-  fmaap =
-    error "todo"
+  fmaap f g = f.g
 
 -----------------------
 -- SUPPORT LIBRARIES --
