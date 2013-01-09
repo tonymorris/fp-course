@@ -1,0 +1,27 @@
+Installation
+============
+
+Getting up and running
+----------------------
+
+Install the Haskell interpreter GHCI:
+
+    http://www.haskell.org/platform/
+
+Install the Haskell dependency management system cabal:
+
+    http://www.haskell.org/cabal/
+
+    (you will need to follow further instrucions)
+
+Install tutorial dependencies:
+
+    cabal update
+    cabal install QuickCheck
+    cabal install test-framework-quickcheck2
+    cabal install test-framework-hunit
+
+Type 'ghci' from the top level of this project.  This loads
+the .ghci file which references src/Course.hs
+
+You're off and running :-)
