@@ -12,7 +12,6 @@ class Moonad m where
   -- Relative Difficulty: 3
   -- (use bind and reeturn)
   fmaap' :: (a -> b) -> m a -> m b
---  fmaap' f ma = bind (reeturn.f) ma
   fmaap' f ma = bind (reeturn.f) ma
 
 -- Exercise 5
