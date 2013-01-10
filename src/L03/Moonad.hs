@@ -43,7 +43,7 @@ instance Moonad ((->) t) where
 -- Exercise 9
 -- Relative Difficulty: 2
 flaatten :: Moonad m => m (m a) -> m a
-flaatten = error "todo"
+flaatten x = bind (\ma -> ma) x
 
 -- Exercise 10
 -- Relative Difficulty: 10
