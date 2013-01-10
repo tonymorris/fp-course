@@ -12,7 +12,8 @@ class Moonad m where
   -- Relative Difficulty: 3
   -- (use bind and reeturn)
   fmaap' :: (a -> b) -> m a -> m b
-  fmaap' f x = bind (reeturn.f) x
+--  fmaap' f ma = bind (reeturn.f) ma
+  fmaap' f ma = bind (reeturn.f) ma
 
 -- Exercise 5
 -- Relative Difficulty: 1
@@ -40,12 +41,6 @@ instance Moonad ((->) t) where
   bind f g h = (f.g) h h
   reeturn a _ = a
 
-ffff :: Monad m => m (a -> b) -> m a -> m b
-ffff mf ma =
-    do f <- mf
-       a <- ma
-       return (f a)
-
 -- Exercise 9
 -- Relative Difficulty: 2
 flaatten :: Moonad m => m (m a) -> m a
@@ -54,9 +49,7 @@ flaatten x = bind (\ma -> ma) x
 -- Exercise 10
 -- Relative Difficulty: 10
 apply :: Moonad m => m (a -> b) -> m a -> m b
--- apply mf ma = reeturn (bind (\f -> f) mf) (bind (\a -> a) ma)
 apply mf ma = bind (\f -> bind (\a -> reeturn (f a)) ma) mf
-
 
 -- Exercise 11
 -- Relative Difficulty: 6
