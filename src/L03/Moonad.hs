@@ -57,7 +57,7 @@ lift2 :: Moonad m => (a -> b -> c) -> m a -> m b -> m c
 lift2 f ma mb = 
     bind (\a -> 
     bind (\b -> 
-    reeturn (f a b)
+    reeturn $ f a b
     ) mb) ma
 
 -- Exercise 12
@@ -68,14 +68,20 @@ lift3 f ma mb mc =
     bind (\a -> 
     bind (\b ->
     bind (\c ->
-    reeturn (f a b c)
-    ) mc) mb ) ma 
+    reeturn $ f a b c
+    ) mc) mb) ma 
 
 -- Exercise 13
 -- Relative Difficulty: 6
 -- (bonus: use apply + lift3)
 lift4 :: Moonad m => (a -> b -> c -> d -> e) -> m a -> m b -> m c -> m d -> m e
-lift4 = error "todo"
+lift4 f ma mb mc md =
+    bind (\a -> 
+    bind (\b ->
+    bind (\c ->
+    bind (\d ->
+    reeturn $ f a b c d
+    ) md) mc) mb) ma 
 
 -- Exercise 14
 -- Relative Difficulty: 3
