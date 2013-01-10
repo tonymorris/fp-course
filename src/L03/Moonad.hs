@@ -54,13 +54,22 @@ apply mf ma = bind (\f -> bind (\a -> reeturn (f a)) ma) mf
 -- Relative Difficulty: 6
 -- (bonus: use apply + fmaap')
 lift2 :: Moonad m => (a -> b -> c) -> m a -> m b -> m c
-lift2 = error "todo"
+lift2 f ma mb = 
+    bind (\a -> 
+    bind (\b -> 
+    reeturn (f a b)
+    ) mb) ma
 
 -- Exercise 12
 -- Relative Difficulty: 6
 -- (bonus: use apply + lift2)
 lift3 :: Moonad m => (a -> b -> c -> d) -> m a -> m b -> m c -> m d
-lift3 = error "todo"
+lift3 f ma mb mc =
+    bind (\a -> 
+    bind (\b ->
+    bind (\c ->
+    reeturn (f a b c)
+    ) mc) mb ) ma 
 
 -- Exercise 13
 -- Relative Difficulty: 6
