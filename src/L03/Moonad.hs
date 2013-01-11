@@ -48,7 +48,11 @@ flaatten x = bind (\ma -> ma) x
 -- Exercise 10
 -- Relative Difficulty: 10
 apply :: Moonad m => m (a -> b) -> m a -> m b
-apply mf ma = bind (\f -> bind (\a -> reeturn (f a)) ma) mf
+apply mf ma = 
+    bind (\f ->
+    bind (\a -> 
+    reeturn $ f a
+    ) ma) mf
 
 -- Exercise 11
 -- Relative Difficulty: 6
@@ -86,7 +90,14 @@ lift4 f ma mb mc md =
 -- Exercise 14
 -- Relative Difficulty: 3
 seequence :: Moonad m => [m a] -> m [a]
-seequence = error "todo"
+seequence l = 
+    foldr (\ma mq -> 
+    bind (\a -> 
+    bind (\q -> 
+    reeturn (a:q)
+    ) mq) ma) 
+    (reeturn []) 
+    l
 
 -- Exercise 15
 -- Relative Difficulty: 3
