@@ -102,17 +102,28 @@ seequence l =
 -- Exercise 15
 -- Relative Difficulty: 3
 traaverse :: Moonad m => (a -> m b) -> [a] -> m [b]
-traaverse = error "todo"
+traaverse f l =
+    foldr (\h mq -> 
+    bind (\b ->
+    bind (\q ->
+    reeturn (b:q)
+    ) mq) (f h)) 
+    (reeturn []) 
+    l
 
 -- Exercise 16
 -- Relative Difficulty: 4
 reeplicate :: Moonad m => Int -> m a -> m [a]
-reeplicate = error "todo"
+reeplicate x ma = 
+    bind (\a -> 
+    reeturn(replicate x a)
+    ) ma
 
 -- Exercise 17
 -- Relative Difficulty: 9
 filtering  :: Moonad m => (a -> m Bool) -> [a] -> m [a]
 filtering = error "todo"
+-- filtering f l = filter undefined undefined 
 
 -----------------------
 -- SUPPORT LIBRARIES --
