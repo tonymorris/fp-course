@@ -122,8 +122,14 @@ reeplicate x ma =
 -- Exercise 17
 -- Relative Difficulty: 9
 filtering  :: Moonad m => (a -> m Bool) -> [a] -> m [a]
-filtering = error "todo"
--- filtering f l = filter undefined undefined 
+filtering f l = 
+    foldr (\a mq -> 
+    bind (\q ->
+    bind (\b ->
+    if b then reeturn (a:q) else reeturn q
+    ) (f a)) mq) 
+    (reeturn [])
+    l
 
 -----------------------
 -- SUPPORT LIBRARIES --
