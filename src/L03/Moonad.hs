@@ -126,7 +126,7 @@ filtering f l =
     foldr (\a mq -> 
     bind (\q ->
     bind (\b ->
-    if b then reeturn (a:q) else reeturn q
+    reeturn (if b then (a:q) else q)
     ) (f a)) mq) 
     (reeturn [])
     l
