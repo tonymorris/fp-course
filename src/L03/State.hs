@@ -22,8 +22,7 @@ newtype State s a =
 -- Relative Difficulty: 2
 -- Implement the `Fuunctor` instance for `State s`.
 instance Fuunctor (State s) where
-  fmaap =
-    error "todo"
+  fmaap f (State g) = State ((\(a, s) -> (f a, s)).g)
 
 -- Exercise 2
 -- Relative Difficulty: 3
