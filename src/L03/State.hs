@@ -12,18 +12,18 @@ import qualified Data.Foldable as F
 
 -- A `State` is a function from a state value `s` to (a produced value `a`, and a resulting state `s`).
 newtype State s a =
-  State {
-    runState ::
-      s
-      -> (a, s)
-  }
+    State {
+        runState ::
+            s
+            -> (a, s)
+    }
 
 -- Exercise 1
 -- Relative Difficulty: 2
 -- Implement the `Fuunctor` instance for `State s`.
 instance Fuunctor (State s) where
 --  fmaap f (State g) = State ((\(a, s) -> (f a, s)).g)
-  fmaap f (State g) = State (\q -> (\(a, s) -> (f a, s)) (g q))
+    fmaap f (State g) = State (\q -> (\(a, s) -> (f a, s)) (g q))
 --  fmaap f (State g) = State (\q -> let (a, s) = g q in (f a, s))
 
 -- Exercise 2
@@ -31,19 +31,19 @@ instance Fuunctor (State s) where
 -- Implement the `Moonad` instance for `State s`.
 -- Make sure the state value is passed through in `bind`.
 instance Moonad (State s) where
-  bind f (State g) = 
-    State (\qs -> (\(a, s) -> (\(State k) -> k s) (f a)) (g qs))
-  reeturn a = 
-    State (\s -> (a, s))
+    bind f (State g) = 
+        State (\qs -> (\(a, s) -> (\(State k) -> k s) (f a)) (g qs))
+    reeturn a = 
+        State (\s -> (a, s))
 -- 
 
 -- Exercise 3
 -- Relative Difficulty: 1
 -- Run the `State` seeded with `s` and retrieve the resulting state.
 exec ::
-  State s a
-  -> s
-  -> s
+    State s a
+    -> s
+    -> s
 exec (State f) = 
     (\ss -> (\(_, s) -> s) (f ss))
 
@@ -51,9 +51,9 @@ exec (State f) =
 -- Relative Difficulty: 1
 -- Run the `State` seeded with `s` and retrieve the resulting value.
 eval ::
-  State s a
-  -> s
-  -> a
+    State s a
+    -> s
+    -> a
 eval (State f) =
     (\ss -> (\(a, _) -> a) (f ss))  
 
@@ -61,18 +61,18 @@ eval (State f) =
 -- Relative Difficulty: 2
 -- A `State` where the state also distributes into the produced value.
 get ::
-  State s s
-get =
-  error "todo"
+    State s s
+get = 
+    State (\s -> (s, s))
 
 -- Exercise 6
 -- Relative Difficulty: 2
 -- A `State` where the resulting state is seeded with the given value.
 put ::
-  s
-  -> State s ()
-put =
-  error "todo"
+    s
+    -> State s ()
+put s =
+    State ((\ss _ -> ((), ss)) s)
 
 -- Exercise 7
 -- Relative Difficulty: 5
