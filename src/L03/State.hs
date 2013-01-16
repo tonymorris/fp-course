@@ -31,10 +31,11 @@ instance Fuunctor (State s) where
 -- Implement the `Moonad` instance for `State s`.
 -- Make sure the state value is passed through in `bind`.
 instance Moonad (State s) where
-  bind =
-    error "todo"
-  reeturn =
-    error "todo"
+  bind f (State g) = 
+    State (\qs -> (\(a, s) -> (\(State k) -> k s) (f a)) (g qs))
+  reeturn a = 
+    State (\s -> (a, s))
+-- 
 
 -- Exercise 3
 -- Relative Difficulty: 1
@@ -43,8 +44,8 @@ exec ::
   State s a
   -> s
   -> s
-exec =
-  error "todo"
+exec (State f) = 
+    (\ss -> (\(_, s) -> s) (f ss))
 
 -- Exercise 4
 -- Relative Difficulty: 1
