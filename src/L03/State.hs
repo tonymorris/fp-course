@@ -54,8 +54,8 @@ eval ::
   State s a
   -> s
   -> a
-eval =
-  error "todo"
+eval (State f) =
+    (\ss -> (\(a, _) -> a) (f ss))  
 
 -- Exercise 5
 -- Relative Difficulty: 2
