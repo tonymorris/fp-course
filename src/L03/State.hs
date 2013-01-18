@@ -89,8 +89,8 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM =
-  error "todo"
+findM _ Nil = reeturn Empty
+findM g (h :| t) = bind (\b -> if b then (reeturn (Full h)) else (findM g t)) (g h) 
 
 -- Exercise 8
 -- Relative Difficulty: 4
@@ -101,8 +101,12 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo"
+firstRepeat = error "NEXT"
+-- firstRepeat as = findM (\a -> State (\s -> ) as
+
+-- State :: (s -> (a, s)) -> State s a
+-- findM :: Moonad f => (a -> f Bool) -> List a -> f (Optional a)
+-- SetInState :: (Set s, Optional a) => s -> (a, s)
 
 -- Exercise 9
 -- Relative Difficulty: 5
