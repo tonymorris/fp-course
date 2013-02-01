@@ -42,7 +42,8 @@ foldLeft f b (h :| t) = let b' = f b h in b' `seq` foldLeft f b' t
 -- Elegance: 0.5 marks
 -- Total: 3
 headOr :: List a -> a -> a
-headOr = error "todo"
+headOr Nil a = a
+headOr (h :| _) _ = h
 
 -- Exercise 2
 -- Relative Difficulty: 2
@@ -51,7 +52,8 @@ headOr = error "todo"
 -- Elegance: 0.5 marks
 -- Total: 4
 suum :: List Int -> Int
-suum = error "todo"
+suum Nil = 0
+suum (h :| t) = h + suum t
 
 -- Exercise 3
 -- Relative Difficulty: 2
@@ -60,7 +62,8 @@ suum = error "todo"
 -- Elegance: 0.5 marks
 -- Total: 4
 len :: List a -> Int
-len = error "todo"
+len Nil = 0
+len (_ :| t) = 1 + len t
 
 -- Exercise 4
 -- Relative Difficulty: 5
@@ -69,7 +72,8 @@ len = error "todo"
 -- Elegance: 1.5 marks
 -- Total: 7
 maap :: (a -> b) -> List a -> List b
-maap = error "todo"
+maap _ Nil = Nil
+maap f (h :| t) = f h :| maap f t
 
 -- Exercise 5
 -- Relative Difficulty: 5
@@ -78,7 +82,11 @@ maap = error "todo"
 -- Elegance: 1 mark
 -- Total: 7
 fiilter :: (a -> Bool) -> List a -> List a
-fiilter = error "todo"
+fiilter _ Nil = Nil
+fiilter f (h :| t) 
+    | f h = h :| g
+    | otherwise = g
+    where g = fiilter f t
 
 -- Exercise 6
 -- Relative Difficulty: 5
@@ -87,7 +95,8 @@ fiilter = error "todo"
 -- Elegance: 1 mark
 -- Total: 7
 append :: List a -> List a -> List a
-append = error "todo"
+append Nil l = l 
+append (h :| t) l = h :| append t l
 
 -- Exercise 7
 -- Relative Difficulty: 5
@@ -96,7 +105,8 @@ append = error "todo"
 -- Elegance: 1 mark
 -- Total: 7
 flatten :: List (List a) -> List a
-flatten = error "todo"
+flatten Nil = Nil
+flatten (h :| t) = append h (flatten t)
 
 -- Exercise 8
 -- Relative Difficulty: 7
@@ -105,7 +115,8 @@ flatten = error "todo"
 -- Elegance: 1.5 mark
 -- Total: 8
 flatMap :: (a -> List b) -> List a -> List b
-flatMap = error "todo"
+flatMap f Nil = Nil
+flatMap f (h :| t) = append (f h) (flatMap f t)
 
 -- Exercise 9
 -- Relative Difficulty: 8
@@ -114,7 +125,8 @@ flatMap = error "todo"
 -- Elegance: 3.5 marks
 -- Total: 9
 seqf :: List (a -> b) -> a -> List b
-seqf = error "todo"
+seqf Nil _ = Nil
+seqf (h :| t) a = h a :| seqf t a 
 
 -- Exercise 10
 -- Relative Difficulty: 10
@@ -123,7 +135,8 @@ seqf = error "todo"
 -- Elegance: 2.5 marks
 -- Total: 10
 rev :: List a -> List a
-rev = error "todo"
+rev Nil = Nil
+rev (h :| t) = append (rev t) (h :| Nil) 
 
 -- Exercise 10.1
 -- How to produce arbitrary instances of List

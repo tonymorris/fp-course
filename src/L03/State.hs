@@ -12,65 +12,67 @@ import qualified Data.Foldable as F
 
 -- A `State` is a function from a state value `s` to (a produced value `a`, and a resulting state `s`).
 newtype State s a =
-  State {
-    runState ::
-      s
-      -> (a, s)
-  }
+    State {
+        runState ::
+            s
+            -> (a, s)
+    }
 
 -- Exercise 1
 -- Relative Difficulty: 2
 -- Implement the `Fuunctor` instance for `State s`.
 instance Fuunctor (State s) where
-  fmaap =
-    error "todo"
+--  fmaap f (State g) = State ((\(a, s) -> (f a, s)).g)
+    fmaap f (State g) = State (\q -> (\(a, s) -> (f a, s)) (g q))
+--  fmaap f (State g) = State (\q -> let (a, s) = g q in (f a, s))
 
 -- Exercise 2
 -- Relative Difficulty: 3
 -- Implement the `Moonad` instance for `State s`.
 -- Make sure the state value is passed through in `bind`.
 instance Moonad (State s) where
-  bind =
-    error "todo"
-  reeturn =
-    error "todo"
+    bind f (State g) = 
+        State (\qs -> (\(a, s) -> (\(State k) -> k s) (f a)) (g qs))
+    reeturn a = 
+        State (\s -> (a, s))
+-- 
 
 -- Exercise 3
 -- Relative Difficulty: 1
 -- Run the `State` seeded with `s` and retrieve the resulting state.
 exec ::
-  State s a
-  -> s
-  -> s
-exec =
-  error "todo"
+    State s a
+    -> s
+    -> s
+exec (State f) = 
+    (\ss -> (\(_, s) -> s) (f ss))
 
 -- Exercise 4
 -- Relative Difficulty: 1
 -- Run the `State` seeded with `s` and retrieve the resulting value.
 eval ::
-  State s a
-  -> s
-  -> a
-eval =
-  error "todo"
+    State s a
+    -> s
+    -> a
+eval (State f) =
+    (\ss -> (\(a, _) -> a) (f ss))  
 
 -- Exercise 5
 -- Relative Difficulty: 2
 -- A `State` where the state also distributes into the produced value.
 get ::
-  State s s
-get =
-  error "todo"
+    State s s
+get = 
+    State (\s -> (s, s))
 
 -- Exercise 6
 -- Relative Difficulty: 2
 -- A `State` where the resulting state is seeded with the given value.
 put ::
-  s
-  -> State s ()
-put =
-  error "todo"
+    s
+    -> State s ()
+put s =
+    State ((\ss _ -> ((), ss)) s)
 
 -- Exercise 7
 -- Relative Difficulty: 5
@@ -87,8 +89,8 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM =
-  error "todo"
+findM _ Nil = reeturn Empty
+findM g (h :| t) = bind (\b -> if b then (reeturn (Full h)) else (findM g t)) (g h) 
 
 -- Exercise 8
 -- Relative Difficulty: 4
@@ -99,8 +101,12 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo"
+firstRepeat = error "NEXT"
+-- firstRepeat as = findM (\a -> State (\s -> ) as
+
+-- State :: (s -> (a, s)) -> State s a
+-- findM :: Moonad f => (a -> f Bool) -> List a -> f (Optional a)
+-- SetInState :: (Set s, Optional a) => s -> (a, s)
 
 -- Exercise 9
 -- Relative Difficulty: 5

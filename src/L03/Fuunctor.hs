@@ -11,26 +11,24 @@ class Fuunctor f where
 -- Exercise 1
 -- Relative Difficulty: 1
 instance Fuunctor Id where
-  fmaap =
-    error "todo"
+  fmaap f (Id a) = Id (f a)
 
 -- Exercise 2
 -- Relative Difficulty: 2
 instance Fuunctor List where
-  fmaap =
-    error "todo"
+  fmaap _ Nil = Nil
+  fmaap f (x :| xs) = (f x) :| fmaap f xs
 
 -- Exercise 3
 -- Relative Difficulty: 2
 instance Fuunctor Optional where
-  fmaap =
-    error "todo"
+  fmaap _ Empty = Empty
+  fmaap f (Full a) = Full (f a)
 
 -- Exercise 4
 -- Relative Difficulty: 3
 instance Fuunctor ((->) t) where
-  fmaap =
-    error "todo"
+  fmaap f g = f.g
 
 -- Exercise 4
 -- Relative Difficulty: 2
