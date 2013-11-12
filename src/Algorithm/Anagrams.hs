@@ -1,8 +1,11 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Algorithm.Anagrams where
 
 import Data.Function(on)
 import Data.Char(toLower)
 import Data.List(permutations, intersectBy)
+import Core
 
 {-
 

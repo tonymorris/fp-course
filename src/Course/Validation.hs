@@ -1,4 +1,8 @@
-module Intro.Validation where
+{-# LANGUAGE NoImplicitPrelude #-}
+
+module Course.Validation where
+
+import Course.Core
 
 --  class Validation<A> {
 --    Validation(String error) {} // Error
@@ -11,7 +15,7 @@ module Intro.Validation where
 data Validation a = Error Err | Value a
   deriving (Eq, Show)
 
-type Err = String
+type Err = [Char]
 
 -- | Returns whether or not the given validation is an error.
 --
