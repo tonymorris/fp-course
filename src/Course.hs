@@ -28,6 +28,27 @@ import Structure.BKTree as X
 import Structure.Lens as X
 -}
 import Course.List as X
+import Course.Functor as X
+import Course.Apply as X
+import Course.Applicative as X
+import Course.Bind as X
+import Course.Monad as X
+import Course.Extend as X
+import Course.Comonad as X
+import Course.Compose as X
+import Course.State as X
+import Course.StateT as X
+import Course.Traversable as X
+import Course.Person as X
+import Course.Parser as X
+import Course.MoreParser as X
+import Course.JsonValue as X
+import Course.JsonParser as X
+import Course.ListZipper as X
+import Course.Interactive as X
+import Course.Anagrams as X
+import Course.Cheque as X
+import Course.FastAnagrams as X
 {-
 import Structure.ListZipper as X
 import Structure.MetricSpace as X

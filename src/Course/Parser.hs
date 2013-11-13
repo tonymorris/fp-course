@@ -1,17 +1,23 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Parser.Parser where
+module Course.Parser where
 
-import Core
+import Course.Core
 import Data.Char
-import Control.Applicative
-import Parser.Person
+import Course.Person
+import Course.Functor
+import Course.Apply
+import Course.Applicative
+import Course.Bind
+import Course.Monad
+import Course.List
 import qualified Prelude as P
 
 -- $setup
 -- >>> import Data.Char(isUpper)
 
-type Input = String
+type Input = Str
 
 data ParseResult a =
   UnexpectedEof
@@ -25,13 +31,13 @@ instance Show a => Show (ParseResult a) where
   show UnexpectedEof =
     "Expected end of stream"
   show (ExpectedEof i) =
-    "Expected end of stream, but got >" ++ i ++ "<"
+    "Expected end of stream, but got >" P.++ show i P.++ "<"
   show (UnexpectedChar c) =
-    "Unexpected character" ++ [c]
+    "Unexpected character" P.++ show [c]
   show Failed =
     "Parse failed"
   show (Result i a) =
-    "Result >" ++ i ++ "< " ++ show a
+    "Result >" P.++ show i P.++ "< " P.++ show a
 
 -- Function to also access the input while binding parsers.
 withResultInput ::
@@ -100,8 +106,8 @@ failed =
 character ::
   Parser Char
 character =
-  P (\s -> case s of [] -> UnexpectedEof
-                     (c:r) -> Result r c)
+  P (\s -> case s of Nil -> UnexpectedEof
+                     (c:.r) -> Result r c)
 
 -- Exercise 4
 -- | Return a parser that puts its input into the given parser and
@@ -210,9 +216,9 @@ infixl 3 |||
 -- Result >< ""
 list ::
   Parser a
-  -> Parser [a]
+  -> Parser (List a)
 list k =
-  many1 k ||| valueParser []
+  many1 k ||| valueParser Nil
 
 -- Exercise 8
 -- | Return a parser that produces at least one value from the given parser then
@@ -231,7 +237,7 @@ list k =
 -- True
 many1 ::
   Parser a
-  -> Parser [a]
+  -> Parser (List a)
 many1 k =
   fbindParser k (\k' ->
   fbindParser (list k) (\kk' ->
@@ -296,8 +302,8 @@ digit =
 natural ::
   Parser Int
 natural =
-  bindParser (\k -> case reads k of []    -> failed
-                                    ((h,_):_) -> valueParser h) (list digit)
+  bindParser (\k -> case reads k of Nil        -> failed
+                                    ((h,_):._) -> valueParser h) (list digit)
 
 -- Exercise 10.4
 --
@@ -323,7 +329,7 @@ space =
 --
 -- /Tip:/ Use the @many1@ and @space@ functions.
 spaces1 ::
-  Parser String
+  Parser Str
 spaces1 =
   many1 space
 
@@ -379,14 +385,14 @@ alpha =
 -- >>> isErrorResult (parse (sequenceParser [character, is 'x', upper]) "abCdef")
 -- True
 sequenceParser ::
-  [Parser a]
-  -> Parser [a]
-sequenceParser []    =
-  valueParser []
-sequenceParser (h:t) =
+  List (Parser a)
+  -> Parser (List a)
+sequenceParser Nil =
+  valueParser Nil
+sequenceParser (h:.t) =
   fbindParser h (\a ->
   fbindParser (sequenceParser t) (\as ->
-  valueParser (a : as)))
+  valueParser (a :. as)))
 
 -- Exercise 12
 -- | Return a parser that produces the given number of values off the given parser.
@@ -402,7 +408,7 @@ sequenceParser (h:t) =
 thisMany ::
   Int
   -> Parser a
-  -> Parser [a]
+  -> Parser (List a)
 thisMany n p =
   sequenceParser (replicate n p)
 
@@ -438,7 +444,7 @@ ageParser =
 -- λ> isErrorResult (parse firstNameParser "abc")
 -- True
 firstNameParser ::
-  Parser String
+  Parser Str
 firstNameParser =
   fbindParser upper (\c ->
   fbindParser (list lower) (\cs ->
@@ -460,7 +466,7 @@ firstNameParser =
 -- >>> isErrorResult (parse surnameParser "abc")
 -- True
 surnameParser ::
-  Parser String
+  Parser Str
 surnameParser =
   fbindParser upper (\c ->
   fbindParser (thisMany 5 lower) (\cs ->
@@ -506,7 +512,7 @@ genderParser =
 -- >>> parse phoneBodyParser "a123-456"
 -- Result >a123-456< ""
 phoneBodyParser ::
-  Parser String
+  Parser Str
 phoneBodyParser =
   list (digit ||| is '.' ||| is '-')
 
@@ -529,7 +535,7 @@ phoneBodyParser =
 -- >>> isErrorResult (parse phoneParser "a123-456")
 -- True
 phoneParser ::
-  Parser String
+  Parser Str
 phoneParser =
   fbindParser digit (\d ->
   fbindParser phoneBodyParser (\z ->
@@ -601,24 +607,32 @@ personParser =
 -- Exercise 20.1
 -- | Write a Functor instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.
-instance P.Functor Parser where
-  fmap f =
+instance Functor Parser where
+  (<$>) f =
     bindParser (valueParser . f)
 
--- Exercise 20.2
--- | Write an Applicative functor instance for a @Parser@.
---
+-- | Write a Apply instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.
-instance Applicative Parser where
-  pure =
-    valueParser
+instance Apply Parser where
   p <*> q =
     bindParser (\f -> bindParser (\a -> valueParser (f a)) q) p
 
--- Exercise 20.3
--- | Write a Monad instance for a @Parser@.
-instance P.Monad Parser where
-  return =
+-- Exercise 20.2
+-- | Write an Applicative functor instance for a @Parser@.
+instance Applicative Parser where
+  pure =
     valueParser
+
+-- Exercise 20.3
+-- | Write a Bind instance for a @Parser@.
+instance Bind Parser where
+  (=<<) =
+    error "todo"
+
+instance Monad Parser where
+
+instance P.Monad Parser where
   (>>=) =
-    fbindParser
+    flip (=<<)
+  return =
+    pure

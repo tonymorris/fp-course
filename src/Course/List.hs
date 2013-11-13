@@ -9,8 +9,6 @@
 -- + Bonus for using the provided functions or for using one exercise solution to help solve another.
 -- + Approach with your best available intuition; just dive in and do what you can!
 
--- TOTAL marks:    /66
-
 module Course.List where
 
 import Course.Core
@@ -35,6 +33,12 @@ infixr 5 :.
 instance Show t => Show (List t) where
   show = show . foldRight (:) []
 
+type Str =
+  List Char
+
+type Filename =
+  Str
+
 -- The list of integers from zero to infinity.
 infinity ::
   List Integer
@@ -56,11 +60,6 @@ foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 -- BEGIN Exercises
 
 -- Exercise 1
--- Relative Difficulty: 1
--- Correctness: 2.0 marks
--- Performance: 0.5 mark
--- Elegance: 0.5 marks
--- Total: 3
 --
 -- | Returns the head of the list or the given default.
 --
@@ -94,11 +93,6 @@ product =
   foldLeft (*) 1
 
 -- Exercise 2
--- Relative Difficulty: 2
--- Correctness:   2.5 marks
--- Performance: 1 mark
--- Elegance: 0.5 marks
--- Total: 4
 --
 -- | Sum the elements of the list.
 --
@@ -116,30 +110,20 @@ sum =
   foldLeft (+) 0
 
 -- Exercise 3
--- Relative Difficulty: 2
--- Correctness: 2.5 marks
--- Performance: 1 mark
--- Elegance: 0.5 marks
--- Total: 4
 --
 -- | Return the length of the list.
 --
--- >>> len (1 :. 2 :. 3 :. Nil)
+-- >>> length (1 :. 2 :. 3 :. Nil)
 -- 3
 --
 -- prop> sum (map (const 1) x) == len x
-len ::
+length ::
   List a
   -> Int
-len =
+length =
   foldLeft (const . succ) 0
 
 -- Exercise 4
--- Relative Difficulty: 5
--- Correctness: 4.5 marks
--- Performance: 1.0 mark
--- Elegance: 1.5 marks
--- Total: 7
 --
 -- | Map the given function on each element of the list.
 --
@@ -157,11 +141,6 @@ map f =
   foldRight (\a b -> f a :. b) Nil
 
 -- Exercise 5
--- Relative Difficulty: 5
--- Correctness: 4.5 marks
--- Performance: 1.5 marks
--- Elegance: 1 mark
--- Total: 7
 --
 -- | Return elements satisfying the given predicate.
 --
@@ -181,37 +160,27 @@ filter f =
   foldRight (\a -> if f a then (a:.) else id) Nil
 
 -- Exercise 6
--- Relative Difficulty: 5
--- Correctness: 4.5 marks
--- Performance: 1.5 marks
--- Elegance: 1 mark
--- Total: 7
 --
 -- | Append two lists to a new list.
 --
--- >>> append (1 :. 2 :. 3 :. Nil) (4 :. 5 :. 6 :. Nil)
+-- >>> (1 :. 2 :. 3 :. Nil) ++ (4 :. 5 :. 6 :. Nil)
 -- [1,2,3,4,5,6]
 --
--- prop> headOr x (Nil `append` infinity) == 0
+-- prop> headOr x (Nil ++ infinity) == 0
 --
--- prop> headOr x (y `append` infinity) == headOr 0 y
+-- prop> headOr x (y ++ infinity) == headOr 0 y
 --
--- prop> (x `append` y) `append` z == x `append` (y `append` z)
+-- prop> (x ++ y) ++ z == x ++ (y ++ z)
 --
--- prop> append x Nil == x
-append ::
+-- prop> x ++ Nil == x
+(++) ::
   List a
   -> List a
   -> List a
-append =
+(++) =
   flip (foldRight (:.))
 
 -- Exercise 7
--- Relative Difficulty: 5
--- Correctness: 4.5 marks
--- Performance: 1.5 marks
--- Elegance: 1 mark
--- Total: 7
 --
 -- | Flatten a list of lists to a list.
 --
@@ -227,14 +196,9 @@ flatten ::
   List (List a)
   -> List a
 flatten =
-  foldRight append Nil
+  foldRight (++) Nil
 
 -- Exercise 8
--- Relative Difficulty: 7
--- Correctness: 5.0 marks
--- Performance: 1.5 marks
--- Elegance: 1.5 mark
--- Total: 8
 --
 -- | Map a function then flatten to a list.
 --
@@ -254,11 +218,6 @@ flatMap f =
   flatten . map f
 
 -- Exercise 9
--- Relative Difficulty: 8
--- Correctness: 3.5 marks
--- Performance: 2.0 marks
--- Elegance: 3.5 marks
--- Total: 9
 --
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -343,8 +302,112 @@ listh ::
 listh =
   P.foldr (:.) Nil
 
-putStr :: List Char -> IO ()
-putStr = P.putStr . hlist
+putStr ::
+  List Char
+  -> IO ()
+putStr =
+  P.putStr . hlist
+
+putStrLn ::
+  List Char
+  -> IO ()
+putStrLn =
+  P.putStrLn . hlist
+
+isPrefixOf ::
+  Eq a =>
+  List a
+  -> List a
+  -> Bool
+isPrefixOf Nil _ =
+  True
+isPrefixOf _  Nil =
+  False
+isPrefixOf (x:.xs) (y:.ys) =
+  x == y && isPrefixOf xs ys
+
+zip ::
+  List a
+  -> List b
+  -> List (a, b)
+zip (a:.as) (b:.bs) =
+  (a,b) :. zip as bs
+zip _  _ =
+  Nil
+
+any ::
+  (a -> Bool)
+  -> List a
+  -> Bool
+any p =
+  foldRight ((||) . p) False
+
+all ::
+  (a -> Bool)
+  -> List a
+  -> Bool
+all p =
+  foldRight ((&&) . p) True
+
+permutations
+  :: List a -> List (List a)
+permutations xs0 =
+  let perms Nil _ =
+        Nil
+      perms (t:.ts) is =
+        let interleave' _ Nil r =
+              (ts, r)
+            interleave' f (y:.ys) r =
+               let (us,zs) = interleave' (f . (y:.)) ys r
+               in  (y:.us, f (t:.y:.us):.zs)
+        in foldRight (\xs -> snd . interleave' id xs) (perms ts (t:.is)) (permutations is)
+  in xs0 :. perms xs0 Nil
+
+intersectBy ::
+  (a -> b -> Bool)
+  -> List a
+  -> List b
+  -> List a
+intersectBy e xs ys =
+  filter (\x -> any (e x) ys) xs
+
+take ::
+  (Num n, Ord n) =>
+  n
+  -> List a
+  -> List a
+take n _  | n <= 0 =
+  Nil
+take _ Nil =
+  Nil
+take n (x:.xs) =
+  x :. take (n - 1) xs
+
+drop ::
+  (Num n, Ord n) =>
+  n
+  -> List a
+  -> List a
+drop n xs | n <= 0 =
+  xs
+drop _ Nil =
+  Nil
+drop n (_:.xs) =
+  drop (n-1) xs
+
+repeat ::
+  a
+  -> List a
+repeat x =
+  x :. repeat x
+
+replicate ::
+  (Num n, Ord n) =>
+  n
+  -> a
+  -> List a
+replicate n x =
+  take n (repeat x)
 
 instance IsString (List Char) where
   fromString =

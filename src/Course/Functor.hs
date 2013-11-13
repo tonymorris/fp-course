@@ -14,10 +14,12 @@ class Functor f where
     -> f a
     -> f b
 
+infixl 4 <$>
+
 -- $setup
 -- >>> :set -XOverloadedStrings
 -- >>> import Course.Core
--- >>> import qualified Prelude as P(return)
+-- >>> import qualified Prelude as P(return, (>>))
 
 -- Exercise 1
 --
@@ -39,7 +41,7 @@ instance Functor Id where
 -- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
 instance Functor List where
-  fmap =
+  (<$>) =
     map
 
 -- Exercise 3
@@ -62,7 +64,7 @@ instance Functor Optional where
 -- >>> ((+1) <$> (*2)) 8
 -- 17
 instance Functor ((->) t) where
-  (<$>) =
+  f <$> g =
     \x -> f (g x)
 
 -----------------------
@@ -71,7 +73,7 @@ instance Functor ((->) t) where
 
 -- | Maps a function on an IO program.
 --
--- >>> rev <$> (putStr "hi" >> P.return ("abc" :: List Char))
+-- >>> rev <$> (putStr "hi" P.>> P.return ("abc" :: List Char))
 -- hi"cba"
 instance Functor IO where
   (<$>) =

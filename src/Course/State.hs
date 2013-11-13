@@ -1,15 +1,17 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Monad.State where
+module Course.State where
 
-import Core
+import Course.Core
 import qualified Prelude as P
 import Data.Char
-import Intro.Optional
-import Structure.List
-import Monad.Functor
-import Monad.Monad
+import Course.Optional
+import Course.List
+import Course.Functor
+import Course.Apply
+import Course.Applicative
+import Course.Bind
+import Course.Monad
 import qualified Data.Foldable as F
 import qualified Data.Set as S
 
@@ -31,35 +33,39 @@ newtype State s a =
   }
 
 -- Exercise 1
--- Relative Difficulty: 2
 --
 -- | Implement the `Functor` instance for `State s`.
---
--- >>> runState (fmap (+1) (return 0)) 0
+-- >>> runState ((+1) <$> pure 0) 0
 -- (1,0)
 instance Functor (State s) where
-  fmap f (State k) =
+  f <$> State k =
     State (\s -> let (a, t) = k s in (f a, t))
 
 -- Exercise 2
--- Relative Difficulty: 3
 --
--- | Implement the `Monad` instance for `State s`.
---   Make sure the state value is passed through in `bind`.
---
--- >>> runState (return 1) 0
--- (1,0)
---
+-- | Implement the `Apply` instance for `State s`.
+instance Apply (State s) where
+  State f <*> State a =
+    State (\s -> let (g, t) = f s
+                     (z, u) = a t
+                 in (g z, u))
+
+-- Exercise 2
+-- | Implement the `Bind` instance for `State s`.
 -- >>> runState (bind (const $ put 2) (put 1)) 0
 -- ((),2)
-instance Monad (State s) where
-  bind f (State k) =
+instance Bind (State s) where
+  f =<< State k =
     State (\s -> let (a, t) = k s in runState (f a) t)
-  return a =
+
+-- | Implement the `Applicative` instance for `State s`.
+instance Applicative (State s) where
+  pure a =
     State (\s -> (a, s))
 
+instance Monad (State s) where
+
 -- Exercise 3
--- Relative Difficulty: 1
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
 --
 -- prop> \(Fun _ f) -> exec (State f) s == snd (runState (State f) s)
@@ -71,7 +77,6 @@ exec (State k) =
   snd . k
 
 -- Exercise 4
--- Relative Difficulty: 1
 --
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -84,7 +89,6 @@ eval (State k) =
   fst . k
 
 -- Exercise 5
--- Relative Difficulty: 2
 --
 -- | A `State` where the state also distributes into the produced value.
 --
@@ -96,7 +100,6 @@ get =
   State (\s -> (s, s))
 
 -- Exercise 6
--- Relative Difficulty: 2
 --
 -- | A `State` where the resulting state is seeded with the given value.
 --
@@ -109,7 +112,6 @@ put =
   State . const . (,) ()
 
 -- Exercise 7
--- Relative Difficulty: 5
 --
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -131,12 +133,11 @@ findM ::
   -> List a
   -> f (Optional a)
 findM _ Nil =
-  return Empty
+  pure Empty
 findM p (h :. t) =
-  bind (\q -> if q then return (Full h) else findM p t) (p h)
+  (\q -> if q then pure (Full h) else findM p t) =<< p h
 
 -- Exercise 8
--- Relative Difficulty: 4
 --
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
@@ -152,7 +153,6 @@ firstRepeat x =
   eval (findM (\a -> State (\s -> (a `S.member` s, a `S.insert` s))) x) S.empty
 
 -- Exercise 9
--- Relative Difficulty: 5
 --
 -- | Remove all elements in a `List` that fail a given predicate.
 -- However, while performing the filter, we sequence some `Monad` effect through.
@@ -173,16 +173,15 @@ filterM ::
   -> List a
   -> f (List a)
 filterM _ Nil =
-  return Nil
+  pure Nil
 filterM p (h :. t) =
- bind (\q -> fmap' (if q
-                      then
-                        (h:.)
-                      else
-                        id) (filterM p t)) (p h)
+ (\q -> (if q
+           then
+             (h:.)
+           else
+             id) <$> filterM p t) =<< p h
 
 -- Exercise 10
--- Relative Difficulty: 4
 --
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filterM` and `State` with a @Data.Set#Set@.
@@ -198,7 +197,6 @@ distinct x =
   eval (filterM (\a -> State (\s -> (a `S.notMember` s, a `S.insert` s))) x) S.empty
 
 -- Exercise 11
--- Relative Difficulty: 3
 --
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -216,14 +214,14 @@ produce f a =
   a :. produce f (f a)
 
 -- Exercise 12
--- Relative Difficulty: 10
+--
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
 -- because it results in a recurring sequence.
 --
 -- /Tip:/ Use `findM` with `State` and `produce`.
 --
--- /Tip:/ Use `flatten'` to write a @square@ function.
+-- /Tip:/ Use `flatten` to write a @square@ function.
 --
 -- /Tip:/ Use library functions: @Data.Foldable#elem@, @Data.Char#digitToInt@.
 --
@@ -246,7 +244,7 @@ isHappy =
     (`eval` S.empty) .
     findM (\j -> State $ \s -> (j == 1 || S.member j s, S.insert j s)) .
     produce (P.sum .
-             fmap (flatten' (*) .
+             (<$>) (flatten' (*) .
                    toInteger .
                    digitToInt) .
              show)

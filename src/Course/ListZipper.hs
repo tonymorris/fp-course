@@ -1,11 +1,18 @@
-{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Structure.ListZipper where
+module Course.ListZipper where
 
-import Core
-import Data.List
-import Monad.Functor
+import Course.Core
+import Course.List
+import Course.Optional
+import Course.Functor
+import Course.Apply
+import Course.Applicative
+import Course.Bind
+import Course.Extend
+import Course.Comonad
+import Course.Traversable
+import qualified Prelude as P
 
 -- $setup
 -- >>> import Data.Maybe(isNothing)
@@ -43,22 +50,22 @@ data MaybeListZipper a =
 --
 -- | Implement the `Functor` instance for `ListZipper`.
 --
--- >>> fmap (+1) (ListZipper [3,2,1] 4 [5,6,7])
+-- >>> (+1) <$> (ListZipper [3,2,1] 4 [5,6,7])
 -- [4,3,2] >5< [6,7,8]
 instance Functor ListZipper where
-  fmap f (ListZipper l x r) =
+  f <$> (ListZipper l x r) =
     ListZipper (fmap f l) (f x) (fmap f r)
 
 -- Exercise 2
 --
 -- | Implement the `Functor` instance for `MaybeListZipper`.
 --
--- >>> fmap (+1) (IsZ (ListZipper [3,2,1] 4 [5,6,7]))
+-- >>> (+1) <$> (IsZ (ListZipper [3,2,1] 4 [5,6,7]))
 -- [4,3,2] >5< [6,7,8]
 instance Functor MaybeListZipper where
-  fmap f (IsZ z) =
+  f <$> (IsZ z) =
     IsZ (fmap f z)
-  fmap _ IsNotZ =
+  _ <$> IsNotZ =
     IsNotZ
 
 -- Exercise 3
@@ -81,20 +88,20 @@ fromList (h:t) =
 -- prop> null xs == isNothing (toMaybe (fromList xs))
 --
 -- prop> toMaybe (fromMaybe z) == z
-toMaybe ::
+toOptional ::
   MaybeListZipper a
-  -> Maybe (ListZipper a)
-toMaybe IsNotZ =
-  Nothing
-toMaybe (IsZ z) =
-  Just z
+  -> Optional (ListZipper a)
+toOptional IsNotZ =
+  Empty
+toOptional (IsZ z) =
+  Full z
 
 fromMaybe ::
-  Maybe (ListZipper a)
+  Optional (ListZipper a)
   -> MaybeListZipper a
-fromMaybe Nothing =
+fromMaybe Empty =
   IsNotZ
-fromMaybe (Just z) =
+fromMaybe (Full z) =
   IsZ z
 
 asZipper ::
@@ -532,7 +539,7 @@ index ::
   ListZipper a
   -> Maybe Int
 index (ListZipper l _ _) =
-  Just (length l)
+  Full (length l)
 
 -- Exercise 26
 --
@@ -631,45 +638,6 @@ insertPushRight ::
 insertPushRight a (ListZipper l x r) =
   ListZipper l a (x:r)
 
--- Let's start using proper type-class names.
---
--- The following type-class hierarchy does not correspond to the GHC base library hierarchy.
--- However, it is much more flexible, which we exploit here.
-
-class Functor f => Apply f where
-  (<*>) ::
-    f (a -> b)
-    -> f a
-    -> f b
-
-class Apply f => Applicative f where
-  unit ::
-    a -> f a
-
-class Functor f => Extend f where
-  (<<=) ::
-    (f a -> b)
-    -> f a
-    -> f b
-
-class Extend f => Comonad f where
-  counit ::
-    f a
-    -> a
-
-class Functor t => Traversable t where
-  traverse ::
-    Applicative f =>
-    (a -> f b)
-    -> t a
-    -> f (t b)
-
--- The `Traversable` instance for `[]` is implemented for demonstration.
--- It will also come in use later.
-instance Traversable [] where
-  traverse f =
-    foldr (\a b -> fmap (:) (f a) <*> b) (unit [])
-
 -- Exercise 32
 --
 -- | Implement the `Apply` instance for `ListZipper`.
@@ -698,16 +666,16 @@ instance Apply MaybeListZipper where
 --
 -- /Tip:/ Use @Data.List#repeat@.
 instance Applicative ListZipper where
-  unit a =
+  pure a =
     ListZipper (repeat a) a (repeat a)
 
 -- Exercise 35
 --
 -- | Implement the `Applicative` instance for `MaybeListZipper`.
 --
--- /Tip:/ Use @unit@ for `ListZipper`.
+-- /Tip:/ Use @pure@ for `ListZipper`.
 instance Applicative MaybeListZipper where
-  unit =
+  pure =
     IsZ . unit
 
 -- Exercise 36
@@ -728,10 +696,10 @@ instance Extend ListZipper where
 -- | Implement the `Comonad` instance for `ListZipper`.
 -- This implementation returns the current focus of the zipper.
 --
--- >>> counit (ListZipper [2,1] 3 [4,5])
+-- >>> copure (ListZipper [2,1] 3 [4,5])
 -- 3
 instance Comonad ListZipper where
-  counit (ListZipper _ x _) =
+  copure (ListZipper _ x _) =
     x
 
 -- Exercise 38
@@ -760,7 +728,7 @@ instance Traversable MaybeListZipper where
 
 instance Show a => Show (ListZipper a) where
   show (ListZipper l x r) =
-    show l ++ " >" ++ show x ++ "< " ++ show r
+    show l P.++ " >" P.++ show x P.++ "< " P.++ show r
 
 instance Show a => Show (MaybeListZipper a) where
   show (IsZ z) = show z

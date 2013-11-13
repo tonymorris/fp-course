@@ -70,8 +70,28 @@ library
                       -- Structure.BKTree
                       -- Structure.Lens
                       Course.List
+                      Course.Compose
                       -- Structure.ListZipper
                       -- Structure.MetricSpace
+                      Course.Apply
+                      Course.Applicative
+                      Course.Bind
+                      Course.Monad
+                      Course.Extend
+                      Course.Comonad
+                      Course.State
+                      Course.StateT
+                      Course.Traversable
+                      Course.Person
+                      Course.Parser
+                      Course.MoreParser
+                      Course.JsonValue
+                      Course.JsonParser
+                      Course.ListZipper
+                      Course.Interactive
+                      Course.Anagrams
+                      Course.Cheque
+                      Course.FastAnagrams
 
 test-suite            doctests
   type:

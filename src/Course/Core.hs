@@ -1,13 +1,17 @@
 module Course.Core(
   Eq(..)
+, Ord(..)
 , Show(..)
 , Enum(..)
+, Integral(..)
+, Bounded(..)
 , Num(..)
 , Bool(..)
-, Char
+, Either(..)
 , Int
 , Integer
 , IO
+, Rational
 , seq
 , error
 , undefined
@@ -15,24 +19,37 @@ module Course.Core(
 , flip
 , id
 , (.)
+, ($)
+, (&&)
+, (||)
 , not
 , even
 , odd
-, (>>)
+, fst
+, snd
+, reads
+, getChar
+, on
 , IsString(..)
+, module Data.Char
 ) where
 
 
 import Prelude(
     Eq(..)
+  , Ord(..)
   , Show(..)
   , Enum(..)
+  , Integral(..)
+  , Bounded(..)
   , Num(..)
   , Bool(..)
+  , Either(..)
   , Char
   , Int
   , Integer
   , IO
+  , Rational
   , seq
   , error
   , undefined
@@ -40,120 +57,24 @@ import Prelude(
   , flip
   , id
   , (.)
+  , ($)
+  , (&&)
+  , (||)
   , not
   , even
   , odd
-  , (>>)
+  , fst
+  , snd
+  , reads
   )
 import Data.String(
   IsString(..)
   )
 
-
-{-(
-    ($)
-  , (.)
-  , (=<<)
-  , (>>)
-  , (||)
-  , (&&)
-  , const
-  , seq
-  , id
-  , flip
-  , not
-  , otherwise
-  , fst
-  , snd
-  , error
-  , undefined
-  , even
-  , either
-  , reads
-  , String
-  , FilePath
-  , Char
-  , Int
-  , Integer
-  , IO
-  , Bool(..)
-  , Maybe(..)
-  , Either(..)
-  , Eq(..)
-  , Ord(..)
-  , Show(..)
-  , Enum(..)
-  , Num(..)
-  , Bounded(..)
-  , Integral(..)
-  , Rational
-  , IsString(..)
-  , putStr
-  , putStrLn
-  , getChar
-  , getLine
-  , readFile
-  , writeFile
-  , length
-  , reverse
-  , foldr
-  , zip
-  , minimum
-  , (++)
-  )    -}
-   {-
-  import Prelude(
-      ($)
-    , (.)
-    , (=<<)
-    , (>>)
-      , (||)
-    , (&&)
-    , const
-    , seq
-    , id
-    , flip
-    , not
-    , otherwise
-    , fst
-    , snd
-    , error
-    , undefined
-    , even
-    , either
-    , reads
-    , String
-    , FilePath
-    , Char
-    , Int
-    , Integer
-    , IO
-    , Bool(..)
-    , Maybe(..)
-    , Either(..)
-    , Eq(..)
-    , Ord(..)
-    , Show(..)
-    , Enum(..)
-    , Num(..)
-    , Bounded(..)
-    , Integral(..)
-    , Rational
-    , putStr
-    , putStrLn
-    , getChar
-    , getLine
-    , readFile
-    , writeFile
-    , length
-    , reverse
-    , foldr
-    , zip
-    , minimum
-    , (++)
-    )
-
-  import Data.String(
-    IsString(..)
-    )
-    -}
+import System.IO(
+    getChar
+  )
+import Data.Function(
+    on
+  )
+import Data.Char
