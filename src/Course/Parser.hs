@@ -241,7 +241,7 @@ many1 ::
 many1 k =
   fbindParser k (\k' ->
   fbindParser (list k) (\kk' ->
-  valueParser (k' : kk')))
+  valueParser (k' :. kk')))
 
 -- Exercise 9
 -- | Return a parser that produces a character but fails if
