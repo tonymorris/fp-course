@@ -18,20 +18,20 @@ class Functor f => Apply f where
 infixl 4 <*>
 
 instance Apply Id where
-  (<*>) =
-    error "todo"
+  Id f <*> Id a =
+    Id (f a)
 
 instance Apply List where
-  (<*>) =
-    error "todo"
+  f <*> a =
+    flatMap (\f' -> map (f'$) a) f
 
 instance Apply Optional where
-  (<*>) =
-    error "todo"
+  f <*> a =
+    bindOptional (\f' -> mapOptional (f'$) a) f
 
 instance Apply ((->) t) where
-  (<*>) =
-    error "todo"
+  f <*> g =
+    \x -> f x (g x)
 
 -- Exercise 13
 --
@@ -60,11 +60,10 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 =
-  error "todo"
+lift2 f a b =
+  f <$> a <*> b
 
 -- Exercise 14
--- (bonus: use apply + lift2)
 --
 -- | Apply a ternary function in the Monad environment.
 --
@@ -95,8 +94,8 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 =
-  error "todo"
+lift3 f a b c =
+  lift2 f a b <*> c
 
 -- Exercise 15
 --
@@ -130,24 +129,26 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 =
-  error "todo"
+lift4 f a b c d =
+  lift3 f a b c <*> d
 
+-- | Sequence, discarding the value of the first argument.
 (*>) ::
   Apply f =>
   f a
   -> f b
   -> f b
 (*>) =
-  error "todo"
+  lift2 (const id)
 
+-- | Sequence, discarding the value of the second argument.
 (<*) ::
   Apply f =>
   f b
   -> f a
   -> f b
 (<*) =
-  error "todo"
+  lift2 const
 
 -----------------------
 -- SUPPORT LIBRARIES --
