@@ -676,7 +676,7 @@ instance Applicative ListZipper where
 -- /Tip:/ Use @pure@ for `ListZipper`.
 instance Applicative MaybeListZipper where
   pure =
-    IsZ . unit
+    IsZ . pure
 
 -- Exercise 36
 --
@@ -718,9 +718,9 @@ instance Traversable ListZipper where
 -- /Tip:/ Use `traverse` for `ListZipper`.
 instance Traversable MaybeListZipper where
   traverse _ IsNotZ =
-    unit IsNotZ
+    pure IsNotZ
   traverse f (IsZ z) =
-    fmap IsZ (traverse f z)
+    IsZ <$> traverse f z
 
 -----------------------
 -- SUPPORT LIBRARIES --

@@ -67,6 +67,16 @@ instance Functor ((->) t) where
   f <$> g =
     \x -> f (g x)
 
+-- Exercise 5
+-- Anonymous map
+(<$) ::
+  Functor f =>
+  a
+  -> f b
+  -> f a
+a <$ b =
+  const a <$> b
+
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------

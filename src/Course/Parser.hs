@@ -12,6 +12,7 @@ import Course.Applicative
 import Course.Bind
 import Course.Monad
 import Course.List
+import Course.Optional
 import qualified Prelude as P
 
 -- $setup
@@ -302,8 +303,8 @@ digit =
 natural ::
   Parser Int
 natural =
-  bindParser (\k -> case reads k of Nil        -> failed
-                                    ((h,_):._) -> valueParser h) (list digit)
+  bindParser (\k -> case read k of Empty        -> failed
+                                   Full h -> valueParser h) (list digit)
 
 -- Exercise 10.4
 --
@@ -448,7 +449,7 @@ firstNameParser ::
 firstNameParser =
   fbindParser upper (\c ->
   fbindParser (list lower) (\cs ->
-  valueParser (c : cs)))
+  valueParser (c :. cs)))
 
 -- Exercise 15
 -- | Write a parser for Person.surname.
@@ -471,7 +472,7 @@ surnameParser =
   fbindParser upper (\c ->
   fbindParser (thisMany 5 lower) (\cs ->
   fbindParser (list lower) (\t ->
-  valueParser (c : cs ++ t))))
+  valueParser (c :. cs ++ t))))
 
 -- Exercise 16
 -- | Write a parser for Person.gender.
@@ -540,7 +541,7 @@ phoneParser =
   fbindParser digit (\d ->
   fbindParser phoneBodyParser (\z ->
   fbindParser (is '#') (\_ ->
-  valueParser (d : z))))
+  valueParser (d :. z))))
 
 -- Exercise 19
 -- | Write a parser for Person.

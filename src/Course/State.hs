@@ -12,7 +12,6 @@ import Course.Apply
 import Course.Applicative
 import Course.Bind
 import Course.Monad
-import qualified Data.Foldable as F
 import qualified Data.Set as S
 
 -- $setup
@@ -240,8 +239,7 @@ isHappy ::
   Integer
   -> Bool
 isHappy =
-<<<<<<< HEAD
-  F.elem 1 .
+  contains 1 .
     (`eval` S.empty) .
     findM (\j -> State $ \s -> (j == 1 || S.member j s, S.insert j s)) .
     produce (P.sum .

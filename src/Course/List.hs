@@ -14,6 +14,7 @@ module Course.List where
 import Course.Core
 import Course.Optional
 import qualified Prelude as P
+import qualified Numeric as N
 
 
 -- $setup
@@ -308,6 +309,19 @@ putStrLn ::
 putStrLn =
   P.putStrLn . hlist
 
+readFile ::
+  Filename
+  -> IO Str
+readFile =
+  P.fmap listh . P.readFile . hlist
+
+writeFile ::
+  Filename
+  -> Str
+  -> IO ()
+writeFile n s =
+  P.writeFile (hlist n) (hlist s)
+
 isPrefixOf ::
   Eq a =>
   List a
@@ -446,6 +460,38 @@ read ::
   -> Optional a
 read =
   mapOptional fst . reads
+
+readHexs ::
+  (Eq a, Num a) =>
+  Str
+  -> Optional (a, Str)
+readHexs s =
+  case N.readHex (hlist s) of
+    [] -> Empty
+    ((a, q):_) -> Full (a, listh q)
+
+readHex ::
+  (Eq a, Num a) =>
+  Str
+  -> Optional a
+readHex =
+  mapOptional fst . readHexs
+
+readFloats ::
+  (RealFrac a) =>
+  Str
+  -> Optional (a, Str)
+readFloats s =
+  case N.readSigned N.readFloat (hlist s) of
+    [] -> Empty
+    ((a, q):_) -> Full (a, listh q)
+
+readFloat ::
+  (RealFrac a) =>
+  Str
+  -> Optional a
+readFloat =
+  mapOptional fst . readFloats
 
 instance IsString (List Char) where
   fromString =

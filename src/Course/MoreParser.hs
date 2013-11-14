@@ -6,8 +6,10 @@ import Course.Core
 import Course.Parser
 import Course.List
 import Course.Optional
+import Course.Applicative
+import Course.Apply
+import Course.Traversable
 import Data.Char
-import Numeric
 
 -- $setup
 -- >>> import Parser.Parser(isErrorResult, character, lower, is)
@@ -42,7 +44,7 @@ tok ::
 tok p =
   do v <- p
      spaces
-     return v
+     pure v
 
 -- Exercise 3
 -- | Write a function that parses the given char followed by 0 or more spaces.
@@ -95,7 +97,7 @@ string ::
   Str
   -> Parser Str
 string =
-  mapM is
+  traverse is
 
 -- Exercise 7
 -- | Write a function that parsers the given string, followed by 0 or more spaces.
@@ -128,7 +130,7 @@ option ::
   -> Parser a
   -> Parser a
 option a p =
-  p ||| return a
+  p ||| pure a
 
 -- Exercise 9
 -- | Write a parser that parses 1 or more digits.
@@ -203,7 +205,7 @@ between o c a =
   do o
      v <- a
      c
-     return v
+     pure v
 
 -- Exercise 13
 -- | Write a function that applies the given parser in between the two given characters.
@@ -232,7 +234,7 @@ betweenCharTok a b =
 -- Exercise 14
 -- | Write a function that parses the character 'u' followed by 4 hex digits and return the character value.
 --
--- /Tip:/ Use `readHex`, `isHexDigit`, `replicateM`, `satisfy` and the monad instance.
+-- /Tip:/ Use `readHex`, `isHexDigit`, `replicate`, `satisfy` and the monad instance.
 --
 -- >>> parse hex "u0010"
 -- Result >< '\DLE'
@@ -252,11 +254,11 @@ hex ::
   Parser Char
 hex =
   let hInt s = case readHex s of
-                 [] -> 0
-                 ((n, _):_) -> n
+                 Empty -> 0
+                 Full n -> n
   in do is 'u'
-        h <- replicateM 4 (satisfy isHexDigit)
-        return . chr . hInt $ h
+        h <- replicateA 4 (satisfy isHexDigit)
+        pure . chr . hInt $ h
 
 -- Exercise 15
 -- | Write a function that produces a non-empty list of values coming off the given parser (which must succeed at least once),
@@ -278,11 +280,11 @@ hex =
 sepby1 ::
   Parser a
   -> Parser s
-  -> Parser [a]
+  -> Parser (List a)
 sepby1 p s =
   do v <- p
-     w <- list (s >> p)
-     return (v:w)
+     w <- list (s *> p)
+     pure (v:.w)
 
 -- Exercise 16
 -- | Write a function that produces a list of values coming off the given parser,
@@ -304,9 +306,9 @@ sepby1 p s =
 sepby ::
   Parser a
   -> Parser s
-  -> Parser [a]
+  -> Parser (List a)
 sepby p s =
-  sepby1 p s ||| return []
+  sepby1 p s ||| pure Nil
 
 -- Exercise 17
 -- | Write a parser that asserts that there is no remaining input.
@@ -320,13 +322,13 @@ eof ::
   Parser ()
 eof =
   P (\s -> case s of
-             [] -> Result [] ()
+             Nil -> Result Nil ()
              x -> ExpectedEof x)
 
 -- Exercise 18
 -- | Write a parser that produces a characer that satisfies all of the given predicates.
 --
--- /Tip:/ Use `sequence` and @Data.List#and@.
+-- /Tip:/ Use `sequenceParser` and @Data.List#and@.
 --
 -- >>> parse (satisfyAll [isUpper, (/= 'X')]) "ABC"
 -- Result >BC< 'A'
@@ -343,7 +345,7 @@ eof =
 -- >>> isErrorResult (parse (satisfyAll [isUpper, (/= 'X')]) "abc")
 -- True
 satisfyAll ::
-  [Char -> Bool]
+  List (Char -> Bool)
   -> Parser Char
 satisfyAll ps =
   satisfy (and  . sequence ps)
@@ -351,7 +353,7 @@ satisfyAll ps =
 -- Exercise 19
 -- | Write a parser that produces a characer that satisfies any of the given predicates.
 --
--- /Tip:/ Use `sequence` and @Data.List#or@.
+-- /Tip:/ Use `sequenceParser` and @Data.List#or@.
 --
 -- >>> parse (satisfyAny [isLower, (/= 'X')]) "abc"
 -- Result >bc< 'a'
@@ -365,7 +367,7 @@ satisfyAll ps =
 -- >>> isErrorResult (parse (satisfyAny [isLower, (/= 'X')]) "")
 -- True
 satisfyAny ::
-  [Char -> Bool]
+  List (Char -> Bool)
   -> Parser Char
 satisfyAny ps =
   satisfy (or  . sequence ps)
@@ -396,6 +398,6 @@ betweenSepbyComma ::
   Char
   -> Char
   -> Parser a
-  -> Parser [a]
+  -> Parser (List a)
 betweenSepbyComma a b g =
   betweenCharTok a b $ g `sepby` charTok ','

@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Course.JsonParser where
 
@@ -6,8 +7,11 @@ import Course.Core
 import Course.Parser
 import Course.MoreParser
 import Course.JsonValue
+import Course.Functor
+import Course.Apply
+import Course.Applicative
 import Course.List
-import Numeric
+import Course.Optional
 
 -- Exercise 1
 -- | Parse a JSON string. Handle double-quotes, control characters, hexadecimal characters.
@@ -41,14 +45,14 @@ jsonString ::
   Parser Str
 jsonString =
   let e = oneof "\"\\/bfnrt" ||| hex
-      c = (is '\\' >> e)
-          ||| satisfyAll [(/= '"'), (/= '\\')]
+      c = (is '\\' *> e)
+          ||| satisfyAll ((/= '"') :. (/= '\\') :. Nil)
   in betweenCharTok '"' '"' (list c)
 
 -- Exercise 2
 -- | Parse a JSON rational.
 --
--- /Tip:/ Use @Numeric#readSigned@ and @Numeric#readFloat@.
+-- /Tip:/ Use @readFloats@.
 --
 -- >>> parse jsonNumber "234"
 -- Result >< 234 % 1
@@ -73,9 +77,9 @@ jsonString =
 jsonNumber ::
   Parser Rational
 jsonNumber =
-  P (\i -> case readSigned readFloat i of
-             [] -> Failed
-             ((n, z):_) -> Result z n)
+  P (\i -> case readFloats i of
+             Empty -> Failed
+             Full (n, z) -> Result z n)
 
 -- Exercise 3
 -- | Parse a JSON true literal.
@@ -142,7 +146,7 @@ jsonNull =
 -- >>> parse jsonArray "[true, \"abc\", [false]]"
 -- Result >< [JsonTrue,JsonString "abc",JsonArray [JsonFalse]]
 jsonArray ::
-  Parser [JsonValue]
+  Parser (List JsonValue)
 jsonArray =
   betweenSepbyComma '[' ']' jsonValue
 
@@ -202,4 +206,4 @@ readJsonValue ::
   -> IO (ParseResult JsonValue)
 readJsonValue p =
   do c <- readFile p
-     return (jsonValue `parse` c)
+     pure (jsonValue `parse` c)
