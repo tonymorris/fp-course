@@ -18,11 +18,7 @@ class Apply f => Applicative f where
   pure ::
     a -> f a
 
--- todo fix Exercise
-
--- Exercise 6
---
--- | Witness that all things with bind and return also have fmap.
+-- | Witness that all things with (<*>) and pure also have (<$>).
 --
 -- >>> (+1) <$> (Id 2)
 -- Id 3
@@ -37,44 +33,36 @@ class Apply f => Applicative f where
   (a -> b)
   -> f a
   -> f b
-(<$>) =
-  error "todo"
+f <$> a =
+  pure f <*> a
 
--- Exercise 7
---
 -- | Insert into the Id monad.
 --
--- prop> return x == Id x
+-- prop> pure x == Id x
 instance Applicative Id where
   pure =
-    error "todo"
+    Id
 
--- Exercise 8
---
 -- | Insert into a List.
 --
--- prop> return x == x :. Nil
+-- prop> pure x == x :. Nil
 instance Applicative List where
   pure =
-    error "todo"
+    (:. Nil)
 
--- Exercise 9
---
 -- | Insert into an Optional.
 --
--- prop> return x == Full x
+-- prop> pure x == Full x
 instance Applicative Optional where
   pure =
-    error "todo"
+    Full
 
--- Exercise 10
---
 -- | Insert into a constant function.
 --
--- prop> return x y == x
+-- prop> pure x y == x
 instance Applicative ((->) t) where
   pure =
-    error "todo"
+    const
 
 -- Exercise 16
 --
@@ -99,7 +87,7 @@ sequence ::
   List (f a)
   -> f (List a)
 sequence =
-  error "todo"
+  foldRight (lift2 (:.)) (pure Nil)
 
 -- Exercise 18
 --
@@ -121,8 +109,8 @@ replicateA ::
   Int
   -> f a
   -> f (List a)
-replicateA =
-  error "todo"
+replicateA n =
+  sequence . replicate n
 
 -- Exercise 19
 --
@@ -147,8 +135,8 @@ filtering ::
   (a -> f Bool)
   -> List a
   -> f (List a)
-filtering =
-  error "todo"
+filtering p =
+  foldRight (\a -> lift2 (\b -> if b then (a:.) else id) (p a)) (pure Nil)
 
 -----------------------
 -- SUPPORT LIBRARIES --
