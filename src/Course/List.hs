@@ -33,12 +33,6 @@ infixr 5 :.
 instance Show t => Show (List t) where
   show = show . foldRight (:) []
 
-type Str =
-  List Char
-
-type Filename =
-  Str
-
 -- The list of integers from zero to infinity.
 infinity ::
   List Integer
@@ -349,6 +343,34 @@ all ::
 all p =
   foldRight ((&&) . p) True
 
+or ::
+  List Bool
+  -> Bool
+or =
+  any id
+
+and ::
+  List Bool
+  -> Bool
+and =
+  all id
+
+elem ::
+  Eq a =>
+  a
+  -> List a
+  -> Bool
+elem x =
+  any (== x)
+
+notElem ::
+  Eq a =>
+  a
+  -> List a
+  -> Bool
+notElem x =
+  all (/= x)
+
 permutations
   :: List a -> List (List a)
 permutations xs0 =
@@ -409,6 +431,46 @@ replicate ::
 replicate n x =
   take n (repeat x)
 
+reads ::
+  P.Read a =>
+  Str
+  -> Optional (a, Str)
+reads s =
+  case P.reads (hlist s) of
+    [] -> Empty
+    ((a, q):_) -> Full (a, listh q)
+
+read ::
+  P.Read a =>
+  Str
+  -> Optional a
+read =
+  mapOptional fst . reads
+
 instance IsString (List Char) where
   fromString =
     listh
+
+type Str =
+  List Char
+
+type Filename =
+  Str
+
+strconcat ::
+  [Str]
+  -> P.String
+strconcat =
+  P.concatMap hlist
+
+stringconcat ::
+  [P.String]
+  -> P.String
+stringconcat =
+  P.concat
+
+instance P.Monad List where
+  (>>=) =
+    flip flatMap
+  return =
+    (:. Nil)
