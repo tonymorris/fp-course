@@ -111,7 +111,7 @@ sum =
 -- >>> length (1 :. 2 :. 3 :. Nil)
 -- 3
 --
--- prop> sum (map (const 1) x) == len x
+-- prop> sum (map (const 1) x) == length x
 length ::
   List a
   -> Int
@@ -175,6 +175,8 @@ filter f =
 (++) =
   flip (foldRight (:.))
 
+infixr 5 ++
+
 -- Exercise 7
 --
 -- | Flatten a list of lists to a list.
@@ -186,7 +188,7 @@ filter f =
 --
 -- prop> headOr x (flatten (y :. infinity :. Nil)) == headOr 0 y
 --
--- prop> sum (map len x) == len (flatten x)
+-- prop> sum (map length x) == length (flatten x)
 flatten ::
   List (List a)
   -> List a
@@ -276,11 +278,11 @@ find p x =
 -- >>> reverse (1 :. 2 :. 3 :. Nil)
 -- [3,2,1]
 --
--- prop> (reverse . reverse) x == x where types = x :: List Int
+-- prop> let types = x :: List Int in (reverse . reverse) x == x
 --
--- prop> reverse x ++ reverse y == reverse (y ++ x) where types = x :: List Int
+-- prop> let types = x :: List Int in reverse x ++ reverse y == reverse (y ++ x)
 --
--- prop> reverse (x :. Nil) == Int :. Nil where types = x :: Int
+-- prop> let types = x :: Int in reverse (x :. Nil) == x :. Nil
 reverse ::
   List a
   -> List a
@@ -326,6 +328,11 @@ writeFile ::
 writeFile n s =
   P.writeFile (hlist n) (hlist s)
 
+getLine ::
+  IO Str
+getLine =
+  P.fmap listh P.getLine
+
 isPrefixOf ::
   Eq a =>
   List a
@@ -338,14 +345,115 @@ isPrefixOf _  Nil =
 isPrefixOf (x:.xs) (y:.ys) =
   x == y && isPrefixOf xs ys
 
+isEmpty ::
+  List a
+  -> Bool
+isEmpty Nil =
+  True
+isEmpty (_:._) =
+  False
+
+span ::
+  (a -> Bool)
+  -> List a
+  -> (List a, List a)
+span p x =
+  (takeWhile p x, dropWhile p x)
+
+break ::
+  (a -> Bool)
+  -> List a
+  -> (List a, List a)
+break p =
+  span (not . p)
+
+dropWhile ::
+  (a -> Bool)
+  -> List a
+  -> List a
+dropWhile _ Nil =
+  Nil
+dropWhile p xs@(x:.xs') =
+  if p x
+    then
+      dropWhile p xs'
+    else
+      xs
+
+takeWhile ::
+  (a -> Bool)
+  -> List a
+  -> List a
+takeWhile _ Nil =
+  Nil
+takeWhile p (x:.xs) =
+  if p x
+    then
+      x :. takeWhile p xs
+    else
+      Nil
+
 zip ::
   List a
   -> List b
   -> List (a, b)
-zip (a:.as) (b:.bs) =
-  (a,b) :. zip as bs
-zip _  _ =
+zip =
+  zipWith (,)
+
+zipWith ::
+  (a -> b -> c)
+  -> List a
+  -> List b
+  -> List c
+zipWith f (a:.as) (b:.bs) =
+  f a b :. zipWith f as bs
+zipWith _ _  _ =
   Nil
+
+unfoldr ::
+  (a -> Optional (b, a))
+  -> a
+  -> List b
+unfoldr f b  =
+  case f b of
+    Full (a, z) -> a :. unfoldr f z
+    Empty -> Nil
+
+lines ::
+  Str
+  -> List Str
+lines =
+  listh . P.fmap listh . P.lines . hlist
+
+unlines ::
+  List Str
+  -> Str
+unlines =
+  listh . P.unlines . hlist . map hlist
+
+words ::
+  Str
+  -> List Str
+words =
+  listh . P.fmap listh . P.words . hlist
+
+unwords ::
+  List Str
+  -> Str
+unwords =
+  listh . P.unwords . hlist . map hlist
+
+listOptional ::
+  (a -> Optional b)
+  -> List a
+  -> List b
+listOptional _ Nil =
+  Nil
+listOptional f (h:.t) =
+  let r = listOptional f t
+  in case f h of
+       Empty -> r
+       Full q -> q :. r
 
 any ::
   (a -> Bool)

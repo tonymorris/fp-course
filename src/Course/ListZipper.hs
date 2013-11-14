@@ -33,7 +33,7 @@ import qualified Prelude as P
 -- then suppose we add 17 to the focus of this zipper:
 -- ListZipper [1,0] 19 [3,4,5,6]
 data ListZipper a =
-  ListZipper [a] a [a]
+  ListZipper (List a) a (List a)
   deriving Eq
 
 -- A `MaybeListZipper` is a data structure that allows us to "fail" zipper operations.
@@ -54,7 +54,7 @@ data MaybeListZipper a =
 -- [4,3,2] >5< [6,7,8]
 instance Functor ListZipper where
   f <$> (ListZipper l x r) =
-    ListZipper (fmap f l) (f x) (fmap f r)
+    ListZipper (f <$> l) (f x) (f <$> r)
 
 -- Exercise 2
 --
@@ -64,7 +64,7 @@ instance Functor ListZipper where
 -- [4,3,2] >5< [6,7,8]
 instance Functor MaybeListZipper where
   f <$> (IsZ z) =
-    IsZ (fmap f z)
+    IsZ (f <$> z)
   _ <$> IsNotZ =
     IsNotZ
 
@@ -74,12 +74,12 @@ instance Functor MaybeListZipper where
 --
 -- prop> xs == toListZ (fromList xs)
 fromList ::
-  [a]
+  List a
   -> MaybeListZipper a
-fromList [] =
+fromList Nil =
   IsNotZ
-fromList (h:t) =
-  IsZ (ListZipper [] h t)
+fromList (h:.t) =
+  IsZ (ListZipper Nil h t)
 
 -- Exercise 4
 --
@@ -139,16 +139,16 @@ asMaybeZipper f (IsZ z) =
 -- | Convert the given zipper back to a list.
 toList ::
   ListZipper a
-  -> [a]
+  -> List a
 toList (ListZipper l x r) =
-  reverse l ++ x:r
+  reverse l ++ x:.r
 
 -- | Convert the given (maybe) zipper back to a list.
 toListZ ::
   MaybeListZipper a
-  -> [a]
+  -> List a
 toListZ IsNotZ =
-  []
+  Nil
 toListZ (IsZ z) =
   toList z
 
@@ -156,8 +156,8 @@ toListZ (IsZ z) =
 --
 -- | Update the focus of the zipper with the given function on the current focus.
 --
--- >>> withFocus (+1) (ListZipper [] 0 [1])
--- [] >1< [1]
+-- >>> withFocus (+1) (ListZipper Nil 0 [1])
+-- Nil >1< [1]
 --
 -- >>> withFocus (+1) (ListZipper [1,0] 2 [3,4])
 -- [1,0] >3< [3,4]
@@ -173,8 +173,8 @@ withFocus f (ListZipper l x r) =
 -- | Set the focus of the zipper to the given value.
 -- /Tip:/ Use `withFocus`.
 --
--- >>> setFocus 1 (ListZipper [] 0 [1])
--- [] >1< [1]
+-- >>> setFocus 1 (ListZipper Nil 0 [1])
+-- Nil >1< [1]
 --
 -- >>> setFocus 1 (ListZipper [1,0] 2 [3,4])
 -- [1,0] >1< [3,4]
@@ -202,13 +202,13 @@ setFocus =
 -- >>> hasLeft (ListZipper [1,0] 2 [3,4])
 -- True
 --
--- >>> hasLeft (ListZipper [] 0 [1,2])
+-- >>> hasLeft (ListZipper Nil 0 [1,2])
 -- False
 hasLeft ::
   ListZipper a
   -> Bool
 hasLeft (ListZipper l _ _) =
-  not (null l)
+  not (isEmpty l)
 
 -- Exercise 9
 --
@@ -217,13 +217,13 @@ hasLeft (ListZipper l _ _) =
 -- >>> hasRight (ListZipper [1,0] 2 [3,4])
 -- True
 --
--- >>> hasRight (ListZipper [1,0] 2 [])
+-- >>> hasRight (ListZipper [1,0] 2 Nil)
 -- False
 hasRight ::
   ListZipper a
   -> Bool
 hasRight (ListZipper _ _ r) =
-  not (null r)
+  not (isEmpty r)
 
 -- Exercise 10
 --
@@ -238,8 +238,8 @@ findLeft ::
   -> ListZipper a
   -> MaybeListZipper a
 findLeft p (ListZipper ls x rs) =
-  case break p (x:ls) of
-    (rs', x':ls') -> IsZ (ListZipper ls' x' (reverse rs' ++ rs))
+  case break p (x:.ls) of
+    (rs', x':.ls') -> IsZ (ListZipper ls' x' (reverse rs' ++ rs))
     _ -> IsNotZ
 
 -- Exercise 11
@@ -255,8 +255,8 @@ findRight ::
   -> ListZipper a
   -> MaybeListZipper a
 findRight p (ListZipper ls x rs) =
-  case break p (x:rs) of
-    (ls', x':rs') -> IsZ (ListZipper (reverse ls' ++ ls) x' rs')
+  case break p (x:.rs) of
+    (ls', x':.rs') -> IsZ (ListZipper (reverse ls' ++ ls) x' rs')
     _ -> IsNotZ
 
 -- Exercise 12
@@ -267,16 +267,16 @@ findRight p (ListZipper ls x rs) =
 -- >>> moveLeftLoop (ListZipper [3,2,1] 4 [5,6,7])
 -- [2,1] >3< [4,5,6,7]
 --
--- >>> moveLeftLoop (ListZipper [] 1 [2,3,4])
--- [3,2,1] >4< []
+-- >>> moveLeftLoop (ListZipper Nil 1 [2,3,4])
+-- [3,2,1] >4< Nil
 moveLeftLoop ::
   ListZipper a
   -> ListZipper a
-moveLeftLoop (ListZipper [] x r) =
-  let (x':r') = (reverse (x:r))
-  in ListZipper r' x' []
-moveLeftLoop (ListZipper (h:t) x r) =
-  ListZipper t h (x:r)
+moveLeftLoop (ListZipper Nil x r) =
+  let (x':.r') = (reverse (x:.r))
+  in ListZipper r' x' Nil
+moveLeftLoop (ListZipper (h:.t) x r) =
+  ListZipper t h (x:.r)
 
 -- Exercise 13
 --
@@ -285,16 +285,16 @@ moveLeftLoop (ListZipper (h:t) x r) =
 -- >>> moveRightLoop (ListZipper [3,2,1] 4 [5,6,7])
 -- [4,3,2,1] >5< [6,7]
 --
--- >>> moveRightLoop (ListZipper [3,2,1] 4 [])
--- [] >1< [2,3,4]
+-- >>> moveRightLoop (ListZipper [3,2,1] 4 Nil)
+-- Nil >1< [2,3,4]
 moveRightLoop ::
   ListZipper a
   -> ListZipper a
-moveRightLoop (ListZipper l x []) =
-   let (x':l') = reverse (x:l)
-   in ListZipper [] x' l'
-moveRightLoop (ListZipper l x (h:t)) =
-   ListZipper (x:l) h t
+moveRightLoop (ListZipper l x Nil) =
+   let (x':.l') = reverse (x:.l)
+   in ListZipper Nil x' l'
+moveRightLoop (ListZipper l x (h:.t)) =
+   ListZipper (x:.l) h t
 
 -- Exercise 14
 --
@@ -303,15 +303,15 @@ moveRightLoop (ListZipper l x (h:t)) =
 -- >>> moveLeft (ListZipper [3,2,1] 4 [5,6,7])
 -- [2,1] >3< [4,5,6,7]
 --
--- >>> moveLeft (ListZipper [] 1 [2,3,4])
+-- >>> moveLeft (ListZipper Nil 1 [2,3,4])
 -- ><
 moveLeft ::
   ListZipper a
   -> MaybeListZipper a
-moveLeft (ListZipper [] _ _) =
+moveLeft (ListZipper Nil _ _) =
   IsNotZ
-moveLeft (ListZipper (h:t) x r) =
-  IsZ (ListZipper t h (x:r))
+moveLeft (ListZipper (h:.t) x r) =
+  IsZ (ListZipper t h (x:.r))
 
 -- Exercise 15
 --
@@ -320,15 +320,15 @@ moveLeft (ListZipper (h:t) x r) =
 -- >>> moveRight (ListZipper [3,2,1] 4 [5,6,7])
 -- [4,3,2,1] >5< [6,7]
 --
--- >>> moveRight (ListZipper [3,2,1] 4 [])
+-- >>> moveRight (ListZipper [3,2,1] 4 Nil)
 -- ><
 moveRight ::
   ListZipper a
   -> MaybeListZipper a
-moveRight (ListZipper _ _ []) =
+moveRight (ListZipper _ _ Nil) =
   IsNotZ
-moveRight (ListZipper l x (h:t)) =
-  IsZ (ListZipper (x:l) h t)
+moveRight (ListZipper l x (h:.t)) =
+  IsZ (ListZipper (x:.l) h t)
 
 -- Exercise 16
 --
@@ -337,15 +337,15 @@ moveRight (ListZipper l x (h:t)) =
 -- >>> swapLeft (ListZipper [3,2,1] 4 [5,6,7])
 -- [4,2,1] >3< [5,6,7]
 --
--- >>> swapLeft (ListZipper [] 1 [2,3,4])
+-- >>> swapLeft (ListZipper Nil 1 [2,3,4])
 -- ><
 swapLeft ::
   ListZipper a
   -> MaybeListZipper a
-swapLeft (ListZipper [] _ _) =
+swapLeft (ListZipper Nil _ _) =
   IsNotZ
-swapLeft (ListZipper (h:t) x r) =
-  IsZ (ListZipper (x:t) h r)
+swapLeft (ListZipper (h:.t) x r) =
+  IsZ (ListZipper (x:.t) h r)
 
 -- Exercise 17
 --
@@ -354,49 +354,49 @@ swapLeft (ListZipper (h:t) x r) =
 -- >>> swapRight (ListZipper [3,2,1] 4 [5,6,7])
 -- [3,2,1] >5< [4,6,7]
 --
--- >>> swapRight (ListZipper [3,2,1] 4 [])
+-- >>> swapRight (ListZipper [3,2,1] 4 Nil)
 -- ><
 swapRight ::
   ListZipper a
   -> MaybeListZipper a
-swapRight (ListZipper _ _ []) =
+swapRight (ListZipper _ _ Nil) =
   IsNotZ
-swapRight (ListZipper l x (h:t)) =
-  IsZ (ListZipper l h (x:t))
+swapRight (ListZipper l x (h:.t)) =
+  IsZ (ListZipper l h (x:.t))
 
 -- Exercise 18
 --
 -- | Drop all values to the left of the focus.
 --
 -- >>> dropLefts (ListZipper [3,2,1] 4 [5,6,7])
--- [] >4< [5,6,7]
+-- Nil >4< [5,6,7]
 --
--- >>> dropLefts (ListZipper [] 1 [2,3,4])
--- [] >1< [2,3,4]
+-- >>> dropLefts (ListZipper Nil 1 [2,3,4])
+-- Nil >1< [2,3,4]
 --
--- prop> dropLefts (ListZipper l x r) == ListZipper [] x r
+-- prop> dropLefts (ListZipper l x r) == ListZipper Nil x r
 dropLefts ::
   ListZipper a
   -> ListZipper a
 dropLefts (ListZipper _ x r) =
-  ListZipper [] x r
+  ListZipper Nil x r
 
 -- Exercise 19
 --
 -- | Drop all values to the right of the focus.
 --
 -- >>> dropRights (ListZipper [3,2,1] 4 [5,6,7])
--- [3,2,1] >4< []
+-- [3,2,1] >4< Nil
 --
--- >>> dropRights (ListZipper [3,2,1] 4 [])
--- [3,2,1] >4< []
+-- >>> dropRights (ListZipper [3,2,1] 4 Nil)
+-- [3,2,1] >4< Nil
 --
--- prop> dropRights (ListZipper l x r) == ListZipper l x []
+-- prop> dropRights (ListZipper l x r) == ListZipper l x Nil
 dropRights ::
   ListZipper a
   -> ListZipper a
 dropRights (ListZipper l x _) =
-  ListZipper l x []
+  ListZipper l x Nil
 
 -- Exercise 20
 --
@@ -534,10 +534,10 @@ nth i z =
 -- >>> index (ListZipper [3,2,1] 4 [5,6,7])
 -- Just 3
 --
--- prop> P.maybe True (\i -> P.maybe False (==z) (toMaybe (nth i z))) (index z)
+-- prop> P.maybe True (\i -> P.maybe False (==z) (toOptional (nth i z))) (index z)
 index ::
   ListZipper a
-  -> Maybe Int
+  -> Optional Int
 index (ListZipper l _ _) =
   Full (length l)
 
@@ -547,26 +547,26 @@ index (ListZipper l _ _) =
 -- CAUTION: This function is non-total, why?
 --
 -- >>> end (ListZipper [3,2,1] 4 [5,6,7])
--- [6,5,4,3,2,1] >7< []
+-- [6,5,4,3,2,1] >7< Nil
 end ::
   ListZipper a
   -> ListZipper a
 end (ListZipper l x r) =
-  let (x':r') = reverse (x:r)
-  in ListZipper (r' ++ l) x' []
+  let (x':.r') = reverse (x:.r)
+  in ListZipper (r' ++ l) x' Nil
 
 -- Exercise 27
 --
 -- | Move the focus to the start of the zipper.
 --
 -- >>> start (ListZipper [3,2,1] 4 [5,6,7])
--- [] >1< [2,3,4,5,6,7]
+-- Nil >1< [2,3,4,5,6,7]
 start ::
   ListZipper a
   -> ListZipper a
 start (ListZipper l x r) =
-  let (x':r') = reverse (x:l)
-  in ListZipper [] x' (r' ++ r)
+  let (x':.r') = reverse (x:.l)
+  in ListZipper Nil x' (r' ++ r)
 
 -- Exercise 28
 --
@@ -575,14 +575,14 @@ start (ListZipper l x r) =
 -- >>> deletePullLeft (ListZipper [3,2,1] 4 [5,6,7])
 -- [2,1] >3< [5,6,7]
 --
--- >>> deletePullLeft (ListZipper [] 1 [2,3,4])
+-- >>> deletePullLeft (ListZipper Nil 1 [2,3,4])
 -- ><
 deletePullLeft ::
   ListZipper a
   -> MaybeListZipper a
-deletePullLeft (ListZipper [] _ _) =
+deletePullLeft (ListZipper Nil _ _) =
   IsNotZ
-deletePullLeft (ListZipper (h:t) _ r) =
+deletePullLeft (ListZipper (h:.t) _ r) =
   IsZ (ListZipper t h r)
 
 -- Exercise 29
@@ -592,14 +592,14 @@ deletePullLeft (ListZipper (h:t) _ r) =
 -- >>> deletePullRight (ListZipper [3,2,1] 4 [5,6,7])
 -- [3,2,1] >5< [6,7]
 --
--- >>> deletePullRight (ListZipper [3,2,1] 4 [])
+-- >>> deletePullRight (ListZipper [3,2,1] 4 Nil)
 -- ><
 deletePullRight ::
   ListZipper a
   -> MaybeListZipper a
-deletePullRight (ListZipper _ _ []) =
+deletePullRight (ListZipper _ _ Nil) =
   IsNotZ
-deletePullRight (ListZipper l _ (h:t)) =
+deletePullRight (ListZipper l _ (h:.t)) =
   IsZ (ListZipper l h t)
 
 -- Exercise 30
@@ -609,7 +609,7 @@ deletePullRight (ListZipper l _ (h:t)) =
 -- >>> insertPushLeft 15 (ListZipper [3,2,1] 4 [5,6,7])
 -- [4,3,2,1] >15< [5,6,7]
 --
--- >>> insertPushLeft 15 (ListZipper [] 1 [2,3,4])
+-- >>> insertPushLeft 15 (ListZipper Nil 1 [2,3,4])
 -- [1] >15< [2,3,4]
 --
 -- prop> P.maybe False (==z) (toMaybe (deletePullLeft (insertPushLeft i z)))
@@ -618,7 +618,7 @@ insertPushLeft ::
   -> ListZipper a
   -> ListZipper a
 insertPushLeft a (ListZipper l x r) =
-  ListZipper (x:l) a r
+  ListZipper (x:.l) a r
 
 -- Exercise 31
 --
@@ -627,7 +627,7 @@ insertPushLeft a (ListZipper l x r) =
 -- >>> insertPushRight 15 (ListZipper [3,2,1] 4 [5,6,7])
 -- [3,2,1] >15< [4,5,6,7]
 --
--- >>> insertPushRight 15 (ListZipper [3,2,1] 4 [])
+-- >>> insertPushRight 15 (ListZipper [3,2,1] 4 Nil)
 -- [3,2,1] >15< [4]
 --
 -- prop> P.maybe False (==z) (toMaybe (deletePullRight (insertPushRight i z)))
@@ -636,7 +636,7 @@ insertPushRight ::
   -> ListZipper a
   -> ListZipper a
 insertPushRight a (ListZipper l x r) =
-  ListZipper l a (x:r)
+  ListZipper l a (x:.r)
 
 -- Exercise 32
 --
@@ -686,10 +686,10 @@ instance Applicative MaybeListZipper where
 -- /Tip:/ Use @Data.List#unfoldr@.
 --
 -- >>> id <<= (ListZipper [2,1] 3 [4,5])
--- [[1] >2< [3,4,5],[] >1< [2,3,4,5]] >[2,1] >3< [4,5]< [[3,2,1] >4< [5],[4,3,2,1] >5< []]
+-- [[1] >2< [3,4,5],Nil >1< [2,3,4,5]] >[2,1] >3< [4,5]< [[3,2,1] >4< [5],[4,3,2,1] >5< Nil]
 instance Extend ListZipper where
   f <<= z =
-    ListZipper (unfoldr (fmap (\z' -> (f z', z')) . toMaybe . moveLeft) z) (f z) (unfoldr (fmap (\z' -> (f z', z')) . toMaybe . moveRight) z)
+    ListZipper (unfoldr ((<$>) (\z' -> (f z', z')) . toOptional . moveLeft) z) (f z) (unfoldr ((<$>) (\z' -> (f z', z')) . toOptional . moveRight) z)
 
 -- Exercise 37
 --
@@ -709,7 +709,7 @@ instance Comonad ListZipper where
 -- An effectful zipper is returned.
 instance Traversable ListZipper where
   traverse f (ListZipper l x r) =
-    fmap (ListZipper . reverse) (traverse f $ reverse l) <*> f x <*> traverse f r
+    (ListZipper . reverse) <$> (traverse f $ reverse l) <*> f x <*> traverse f r
 
 -- Exercise 39
 --

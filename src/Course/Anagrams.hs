@@ -5,6 +5,7 @@ module Course.Anagrams where
 
 import Course.Core
 import Course.List
+import Course.Functor
 
 {-
 
@@ -29,7 +30,7 @@ Functions that might help
 anagrams ::
   Str
   -> Filename
-  -> IO [Str]
+  -> IO (List Str)
 anagrams name =
   (<$>) (intersectBy equalIgnoringCase (permutations name) . lines) . readFile
 

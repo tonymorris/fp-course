@@ -21,6 +21,7 @@ module Course.Cheque where
 import Course.Core
 import Course.Optional
 import Course.List
+import Course.Functor
 import Course.Apply
 import Course.Bind
 import Data.Char
@@ -183,7 +184,31 @@ data Digit =
   | Seven
   | Eight
   | Nine
-  deriving (Show, Eq, Enum, Bounded)
+  deriving (Eq, Enum, Bounded)
+
+showDigit ::
+  Digit
+  -> Str
+showDigit Zero =
+  "zero"
+showDigit One =
+  "one"
+showDigit Two =
+  "two"
+showDigit Three =
+  "three"
+showDigit Four =
+  "four"
+showDigit Five =
+  "five"
+showDigit Six =
+  "six"
+showDigit Seven =
+  "seven"
+showDigit Eight =
+  "eight"
+showDigit Nine =
+  "nine"
 
 -- A data type representing one, two or three digits, which may be useful for grouping.
 data Digit3 =
@@ -219,10 +244,12 @@ fromChar '9' =
 fromChar _ =
   Empty
 
-instance Show Digit3 where
-  show d =
-    let showd x = toLower `fmap` show x
-        x .++. y = x ++ if y == Zero then [] else '-' : showd y
+showDigit3 ::
+  Digit3
+  -> List Char
+showDigit3 d =
+    let showd x = toLower <$> showDigit x
+        x .++. y = x ++ if y == Zero then Nil else '-' :. showd y
     in case d of
         D1 a -> showd a
         D2 Zero b -> showd b
@@ -246,52 +273,52 @@ instance Show Digit3 where
         D2 Eight b -> "eighty" .++. b
         D2 Nine b -> "ninety" .++. b
         D3 Zero Zero Zero -> ""
-        D3 Zero b c -> show (D2 b c)
+        D3 Zero b c -> showDigit3 (D2 b c)
         D3 a Zero Zero -> showd a ++ " hundred"
-        D3 a b c -> showd a ++ " hundred and " ++ show (D2 b c)
+        D3 a b c -> showd a ++ " hundred and " ++ showDigit3 (D2 b c)
 
 toDot ::
-  String
-  -> ([Digit], String)
+  Str
+  -> (List Digit, Str)
 toDot =
-  let toDot' x [] =
-        (x, [])
-      toDot' x (h:t) =
+  let toDot' x Nil =
+        (x, Nil)
+      toDot' x (h:.t) =
         let move = case fromChar h of
-                     Just n -> toDot' . (:) n
-                     Nothing -> if h == '.'
+                     Full n -> toDot' . (:.) n
+                     Empty -> if h == '.'
                                   then
                                     (,)
                                   else
                                      toDot'
         in move x t
-  in toDot' []
+  in toDot' Nil
 
 illionate ::
-  [Digit]
-  -> String
+  List Digit
+  -> Str
 illionate =
   let space "" =
         ""
       space x =
-        ' ' : x
-      todigits acc _ [] =
+        ' ' :. x
+      todigits acc _ Nil =
         acc
-      todigits _ [] _ =
+      todigits _ Nil _ =
         error "unsupported illion"
-      todigits acc (_:is) (Zero:Zero:Zero:t) =
+      todigits acc (_:.is) (Zero:.Zero:.Zero:.t) =
         todigits acc is t
-      todigits acc (i:is) (q:r:s:t) =
-        todigits ((show (D3 s r q) ++ space i) : acc) is t
-      todigits acc (_:is) (Zero:Zero:t) =
+      todigits acc (i:.is) (q:.r:.s:.t) =
+        todigits ((showDigit3 (D3 s r q) ++ space i) :. acc) is t
+      todigits acc (_:.is) (Zero:.Zero:.t) =
         todigits acc is t
-      todigits acc (i:_) (r:s:_) =
-        (show (D2 s r) ++ space i) : acc
-      todigits acc (_:is) (Zero:t) =
+      todigits acc (i:._) (r:.s:._) =
+        (showDigit3 (D2 s r) ++ space i) :. acc
+      todigits acc (_:.is) (Zero:.t) =
         todigits acc is t
-      todigits acc (i:_) (s:_) =
-        (show (D1 s) ++ space i) : acc
-  in unwords . todigits [] illion
+      todigits acc (i:._) (s:._) =
+        (showDigit3 (D1 s) ++ space i) :. acc
+  in unwords . todigits Nil illion
 
 -- | Take a numeric value and produce its English output.
 --
@@ -370,16 +397,16 @@ dollars ::
   Str
   -> Str
 dollars x =
-  let (d, c) = toDot (dropWhile (`notElem` ('.':['1'..'9'])) x)
+  let (d, c) = toDot (dropWhile (`notElem` ('.':.listh ['1'..'9'])) x)
       c' =
-        case mapMaybe fromChar c of
-          [] -> "zero cents"
-          [Zero, One] -> "one cent"
-          (a:b:_) -> show (D2 a b) ++ " cents"
-          (a:_) -> show (D2 a Zero) ++ " cents"
+        case listOptional fromChar c of
+          Nil -> "zero cents"
+          (Zero:.One:.Nil) -> "one cent"
+          (a:.b:._) -> showDigit3 (D2 a b) ++ " cents"
+          (a:._) -> showDigit3 (D2 a Zero) ++ " cents"
       d' =
         case d of
-          [] -> "zero dollars"
-          [One] -> "one dollar"
+          Nil -> "zero dollars"
+          (One:.Nil) -> "one dollar"
           _ -> illionate d ++ " dollars"
   in d' ++ " and " ++ c'
