@@ -64,8 +64,6 @@ instance Applicative ((->) t) where
   pure =
     const
 
--- Exercise 16
---
 -- | Sequences a list of structures to a structure of list.
 --
 -- >>> sequence (Id 7 :. Id 8 :. Id 9 :. Nil)
@@ -89,8 +87,6 @@ sequence ::
 sequence =
   foldRight (lift2 (:.)) (pure Nil)
 
--- Exercise 18
---
 -- | Replicate an effect a given number of times.
 --
 -- >>> replicateA 4 (Id "hi")
@@ -112,8 +108,6 @@ replicateA ::
 replicateA n =
   sequence . replicate n
 
--- Exercise 19
---
 -- | Filter a list with a predicate that produces an effect.
 --
 -- >>> filtering (Id . even) (4 :. 5 :. 6 :. Nil)
