@@ -4,6 +4,7 @@ module Course.FastAnagrams where
 
 import Course.Core
 import Course.List
+import Course.Functor
 import Data.Char
 import Data.Function
 import qualified Data.Set as S
@@ -13,9 +14,9 @@ import qualified Data.Set as S
 fastAnagrams ::
   Str
   -> Filename
-  -> Str
+  -> IO (List Str)
 fastAnagrams name f =
-  (flip (filter . flip S.member) (permutations name) . S.fromList . lines) `fmap` readFile f
+  (flip (filter . flip S.member) (permutations name) . S.fromList . hlist . lines) <$> readFile f
 
 newtype NoCaseString =
   NoCaseString {
@@ -23,7 +24,9 @@ newtype NoCaseString =
   }
 
 instance Eq NoCaseString where
-  (==) = (==) `on` map toLower . ncString
+  (==) =
+    (==) `on` (<$>) toLower . ncString
 
 instance Show NoCaseString where
-  show = show . ncString
+  show =
+    show . ncString
