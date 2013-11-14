@@ -273,14 +273,18 @@ find p x =
 --
 -- | Reverse a list.
 --
--- >>> rev (1 :. 2 :. 3 :. Nil)
+-- >>> reverse (1 :. 2 :. 3 :. Nil)
 -- [3,2,1]
 --
--- prop> (rev . rev) x == x
-rev ::
+-- prop> (reverse . reverse) x == x where types = x :: List Int
+--
+-- prop> reverse x ++ reverse y == reverse (y ++ x) where types = x :: List Int
+--
+-- prop> reverse (x :. Nil) == Int :. Nil where types = x :: Int
+reverse ::
   List a
   -> List a
-rev =
+reverse =
   foldLeft (flip (:.)) Nil
 
 -- END Exercises

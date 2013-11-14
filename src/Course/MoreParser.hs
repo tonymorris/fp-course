@@ -281,10 +281,15 @@ sepby1 ::
   Parser a
   -> Parser s
   -> Parser (List a)
+<<<<<<< HEAD
 sepby1 p s =
   do v <- p
      w <- list (s *> p)
      pure (v:.w)
+=======
+sepby1 =
+  error "todo"
+>>>>>>> a4058fe2bb91d1c8aafcaaa69b1bfb6357d86c45
 
 -- Exercise 16
 -- | Write a function that produces a list of values coming off the given parser,
@@ -307,8 +312,13 @@ sepby ::
   Parser a
   -> Parser s
   -> Parser (List a)
+<<<<<<< HEAD
 sepby p s =
   sepby1 p s ||| pure Nil
+=======
+sepby =
+  error "todo"
+>>>>>>> a4058fe2bb91d1c8aafcaaa69b1bfb6357d86c45
 
 -- Exercise 17
 -- | Write a parser that asserts that there is no remaining input.

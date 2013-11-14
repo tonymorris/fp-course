@@ -77,6 +77,16 @@ instance Functor ((->) t) where
 a <$ b =
   const a <$> b
 
+-- Exercise 5
+-- Anonymous map
+(<$) ::
+  Functor f =>
+  a
+  -> f b
+  -> f a
+(<$) =
+  error "todo"
+
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------
