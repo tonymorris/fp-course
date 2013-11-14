@@ -240,6 +240,7 @@ isHappy ::
   Integer
   -> Bool
 isHappy =
+<<<<<<< HEAD
   F.elem 1 .
     (`eval` S.empty) .
     findM (\j -> State $ \s -> (j == 1 || S.member j s, S.insert j s)) .
@@ -248,11 +249,3 @@ isHappy =
                    toInteger .
                    digitToInt) .
              show)
-
------------------------
--- SUPPORT LIBRARIES --
------------------------
-
-instance F.Foldable Optional where
-  foldr _ z Empty = z
-  foldr f z (Full a) = f a z
