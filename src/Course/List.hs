@@ -177,6 +177,8 @@ filter f =
 
 infixr 5 ++
 
+infixr 5 ++
+
 -- Exercise 7
 --
 -- | Flatten a list of lists to a list.
