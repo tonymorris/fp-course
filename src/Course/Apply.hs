@@ -67,8 +67,6 @@ instance Apply ((->) t) where
   f <*> g =
     \x -> f x (g x)
 
--- Exercise 13
---
 -- | Apply a binary function in the environment.
 --
 -- >>> lift2 (+) (Id 7) (Id 8)
@@ -97,8 +95,6 @@ lift2 ::
 lift2 f a b =
   f <$> a <*> b
 
--- Exercise 14
---
 -- | Apply a ternary function in the Monad environment.
 --
 -- >>> lift3 (\a b c -> a + b + c) (Id 7) (Id 8) (Id 9)
@@ -131,8 +127,6 @@ lift3 ::
 lift3 f a b c =
   lift2 f a b <*> c
 
--- Exercise 15
---
 -- | Apply a quaternary function in the environment.
 --
 -- >>> lift4 (\a b c d -> a + b + c + d) (Id 7) (Id 8) (Id 9) (Id 10)
