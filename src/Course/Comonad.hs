@@ -19,8 +19,8 @@ class Extend f => Comonad f where
 -- >>> copure (Id 7)
 -- 7
 instance Comonad Id where
-  copure (Id a) =
-    a
+  copure =
+    error "todo"
 
 -- | Witness that all things with (<<=) and copure also have (<$>).
 --
@@ -33,4 +33,3 @@ instance Comonad Id where
   -> f b
 f <$> a =
   f . copure <<= a
-
