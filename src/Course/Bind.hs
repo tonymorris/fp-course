@@ -7,6 +7,7 @@ module Course.Bind(
 ) where
 
 import Course.Core
+import Course.Functor
 import Course.Apply
 import Course.Id
 import Course.List
@@ -28,16 +29,16 @@ infixr 1 =<<
   f (a -> b)
   -> f a
   -> f b
-(<*>) =
-  error "todo"
+f <*> a =
+  (\f' -> (f'$) <$> a) =<< f
 
 -- | Binds a function on the Id monad.
 --
--- >>> bind (\x -> Id(x+1)) (Id 2)
+-- >>> (\x -> Id(x+1)) =<< (Id 2)
 -- Id 3
 instance Bind Id where
-  (=<<) =
-    error "todo"
+  f =<< Id a =
+    f a
 
 -- | Binds a function on a List.
 --
@@ -45,7 +46,7 @@ instance Bind Id where
 -- [1,1,2,2,3,3]
 instance Bind List where
   (=<<) =
-    error "todo"
+    flatMap
 
 -- | Binds a function on an Optional.
 --
@@ -53,15 +54,15 @@ instance Bind List where
 -- Full 14
 instance Bind Optional where
   (=<<) =
-    error "todo"
+    bindOptional
 
 -- | Binds a function on the reader ((->) t).
 --
 -- >>> bind (*) (+10) 7
 -- 119
 instance Bind ((->) t) where
-  (=<<) =
-    error "todo"
+  f =<< k =
+    \x -> f (k x) x
 
 -- | Flattens a combined structure to a single structure.
 --
@@ -81,7 +82,7 @@ join ::
   f (f a)
   -> f a
 join =
-  error "todo"
+  (=<<) id
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
@@ -90,8 +91,8 @@ join =
   f a
   -> (a -> f b)
   -> f b
-(>>=) =
-  error "todo"
+a >>= f =
+  join (f <$> a)
 
 infixl 1 >>=
 
