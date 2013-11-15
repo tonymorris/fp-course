@@ -243,7 +243,7 @@ isHappy =
     (`eval` S.empty) .
     findM (\j -> State $ \s -> (j == 1 || S.member j s, S.insert j s)) .
     produce (P.sum .
-             (<$>) (flatten' (*) .
+             (<$>) (join (*) .
                    toInteger .
                    digitToInt) .
              show)
