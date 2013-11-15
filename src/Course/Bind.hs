@@ -63,8 +63,6 @@ f <*> a =
 
 infixl 4 <*>
 
-infixl 4 <*>
-
 -- | Binds a function on the Id monad.
 --
 -- >>> (\x -> Id(x+1)) =<< Id 2
