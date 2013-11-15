@@ -17,18 +17,52 @@ class Functor f => Apply f where
 
 infixl 4 <*>
 
+-- | Implement @Apply@ instance for @Id@.
+--
+-- >>> Id (+10) <*> Id 8
+-- Id 18
 instance Apply Id where
   Id f <*> Id a =
     Id (f a)
 
+-- | Implement @Apply@ instance for @List@.
+--
+-- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
+-- [2,3,4,2,4,6]
 instance Apply List where
   f <*> a =
     flatMap (\f' -> map (f'$) a) f
 
+-- | Implement @Apply@ instance for @Optional@.
+--
+-- >>> Full (+8) <*> Full 7
+-- Full 15
+--
+-- >>> Empty <*> Full 7
+-- Empty
+--
+-- >>> Full (+8) <*> Empty
+-- Empty
 instance Apply Optional where
   f <*> a =
     bindOptional (\f' -> mapOptional (f'$) a) f
 
+-- | Implement @Apply@ instance for reader.
+--
+-- >>> ((+) <*> (+10)) 3
+-- 16
+--
+-- >>> ((+) <*> (+5)) 3
+-- 11
+--
+-- >>> ((+) <*> (+5)) 1
+-- 7
+--
+-- >>> ((*) <*> (+10)) 3
+-- 39
+--
+-- >>> ((*) <*> (+2)) 3
+-- 15
 instance Apply ((->) t) where
   f <*> g =
     \x -> f x (g x)
