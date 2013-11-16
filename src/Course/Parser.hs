@@ -16,6 +16,7 @@ import Course.Optional
 import qualified Prelude as P
 
 -- $setup
+-- >>> :set -XOverloadedStrings
 -- >>> import Data.Char(isUpper)
 
 type Input = Str
@@ -38,7 +39,7 @@ instance Show a => Show (ParseResult a) where
   show Failed =
     "Parse failed"
   show (Result i a) =
-    stringconcat ["Result >", show i, "< ", show a]
+    stringconcat ["Result >", hlist i, "< ", show a]
 
 -- Function to also access the input while binding parsers.
 withResultInput ::
@@ -210,10 +211,10 @@ infixl 3 |||
 -- >>> parse (list (character)) "abc"
 -- Result >< "abc"
 --
--- >>> parse (list (character >> valueParser 'v')) "abc"
+-- >>> parse (list (character *> valueParser 'v')) "abc"
 -- Result >< "vvv"
 --
--- >>> parse (list (character >> valueParser 'v')) ""
+-- >>> parse (list (character *> valueParser 'v')) ""
 -- Result >< ""
 list ::
   Parser a
@@ -231,10 +232,10 @@ list k =
 -- >>> parse (many1 (character)) "abc"
 -- Result >< "abc"
 --
--- >>> parse (many1 (character >> valueParser 'v')) "abc"
+-- >>> parse (many1 (character *> valueParser 'v')) "abc"
 -- Result >< "vvv"
 --
--- >>> isErrorResult (parse (many1 (character >> valueParser 'v')) "")
+-- >>> isErrorResult (parse (many1 (character *> valueParser 'v')) "")
 -- True
 many1 ::
   Parser a
@@ -380,10 +381,10 @@ alpha =
 -- /Tip:/ Use @bindParser@ and @value@.
 -- /Tip:/ Optionally use @Prelude.foldr@. If not, an explicit recursive call.
 --
--- >>> parse (sequenceParser [character, is 'x', upper]) "axCdef"
+-- >>> parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "axCdef"
 -- Result >def< "axC"
 --
--- >>> isErrorResult (parse (sequenceParser [character, is 'x', upper]) "abCdef")
+-- >>> isErrorResult (parse (sequenceParser (character :. is 'x' :. upper :. Nil)) "abCdef")
 -- True
 sequenceParser ::
   List (Parser a)
