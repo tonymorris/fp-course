@@ -12,7 +12,8 @@ import Course.Traversable
 import Data.Char
 
 -- $setup
--- >>> import Parser.Parser(isErrorResult, character, lower, is)
+-- >>> :set -XOverloadedStrings
+-- >>> import Course.Parser(isErrorResult, character, lower, is)
 -- >>> import Data.Char(isUpper, isLower)
 
 -- | Parses the given input and returns the result.
@@ -330,19 +331,19 @@ eof =
 --
 -- /Tip:/ Use `sequenceParser` and @Data.List#and@.
 --
--- >>> parse (satisfyAll [isUpper, (/= 'X')]) "ABC"
+-- >>> parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "ABC"
 -- Result >BC< 'A'
 --
--- >>> parse (satisfyAll [isUpper, (/= 'X')]) "ABc"
+-- >>> parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "ABc"
 -- Result >Bc< 'A'
 --
--- >>> isErrorResult (parse (satisfyAll [isUpper, (/= 'X')]) "XBc")
+-- >>> isErrorResult (parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "XBc")
 -- True
 --
--- >>> isErrorResult (parse (satisfyAll [isUpper, (/= 'X')]) "")
+-- >>> isErrorResult (parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "")
 -- True
 --
--- >>> isErrorResult (parse (satisfyAll [isUpper, (/= 'X')]) "abc")
+-- >>> isErrorResult (parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "abc")
 -- True
 satisfyAll ::
   List (Char -> Bool)
@@ -355,16 +356,16 @@ satisfyAll ps =
 --
 -- /Tip:/ Use `sequenceParser` and @Data.List#or@.
 --
--- >>> parse (satisfyAny [isLower, (/= 'X')]) "abc"
+-- >>> parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "abc"
 -- Result >bc< 'a'
 --
--- >>> parse (satisfyAny [isLower, (/= 'X')]) "ABc"
+-- >>> parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "ABc"
 -- Result >Bc< 'A'
 --
--- >>> isErrorResult (parse (satisfyAny [isLower, (/= 'X')]) "XBc")
+-- >>> isErrorResult (parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "XBc")
 -- True
 --
--- >>> isErrorResult (parse (satisfyAny [isLower, (/= 'X')]) "")
+-- >>> isErrorResult (parse (satisfyAny (isLower :. (/= 'X') :. Nil)) "")
 -- True
 satisfyAny ::
   List (Char -> Bool)
