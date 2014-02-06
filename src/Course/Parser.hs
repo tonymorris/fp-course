@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 module Course.Parser where
 
@@ -194,6 +195,8 @@ P p1 ||| P p2 =
                   p2 s
                 else
                   v)
+
+ifThenElse p t f = if p then t else f
 
 infixl 3 |||
 
@@ -612,8 +615,27 @@ instance Bind Parser where
 
 instance Monad Parser where
 
+return ::
+  Applicative f =>
+  a
+  -> f a
+return =
+  pure
+
+fail = 
+  error "fail"
+
+-- so MoreParser works, delete ultimately
 instance P.Monad Parser where
-  (>>=) =
-    flip (=<<)
   return =
     pure
+  (>>=) =
+    fbindParser
+
+character2 ::
+  Parser (Char, Char)
+character2 =
+  do c1 <- character
+     c2 <- character
+     return (c1, c2)
+
