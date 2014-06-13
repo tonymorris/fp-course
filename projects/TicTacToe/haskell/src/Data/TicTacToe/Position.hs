@@ -2,6 +2,7 @@
 module Data.TicTacToe.Position
 (
   Position(..)
+, magic
 ) where
 
 -- A tic-tac-toe position.
@@ -30,3 +31,25 @@ instance Show Position where
   show SW = "SW"
   show W  = "W "
   show C  = "C "
+
+magic ::
+  Position
+  -> Int
+magic NW =
+  8
+magic N =
+  1
+magic NE =
+  6
+magic W =
+  3
+magic C =
+  5
+magic E =
+  7
+magic SW =
+  4
+magic S =
+  9
+magic SE =
+  2

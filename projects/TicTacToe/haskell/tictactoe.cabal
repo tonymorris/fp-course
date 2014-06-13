@@ -28,7 +28,8 @@ library
 
   build-depends:    base < 5 && >= 4
                     , containers
-                    , ansi-terminal
+                    , semigroups
+                    , lens
 
   ghc-options:      -Wall
 
@@ -47,7 +48,8 @@ executable tic-tac-toe
 
   build-depends:    base < 5 && >= 3
                     , containers
-                    , ansi-terminal
+                    , semigroups
+                    , lens
 
   hs-source-dirs:   src
 

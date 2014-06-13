@@ -1,9 +1,10 @@
 -- | Play tic-tac-toe interactively.
 module Data.TicTacToe.Interact
 (
-  tictactoe
+--  tictactoe
 ) where
 
+{-
 import Data.TicTacToe.Board
 import Data.TicTacToe.Position
 import Data.TicTacToe.Player
@@ -118,3 +119,4 @@ toPosition ::
   -> Position
 toPosition n =
   toEnum (n - 1)
+  -}

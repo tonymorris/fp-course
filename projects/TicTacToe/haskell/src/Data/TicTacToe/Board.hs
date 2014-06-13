@@ -1,18 +1,16 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 -- | A tic-tac-toe board is one of nine positions, each position occupied by either player 1, player 2 or neither and with invariants specific to the rules of tic-tac-toe.
 --
 -- For example, the number of positions occupied by player 1 is equal to, or one more, than the positions occupied by player 2.
 module Data.TicTacToe.Board
+{-
 (
 -- * Board data types
   EmptyBoard
 , Board
 , FinishedBoard
-, Unfinished(..)
-, unfinished
-, Unempty(..)
-, unempty
 -- * Start new game
 , empty
 -- * Game completed
@@ -34,18 +32,147 @@ module Data.TicTacToe.Board
 , showEachPosition
 , showEachPositionFlat
 , showLinePosition
-) where
+) -} where
 
-import Prelude hiding (any, all, concat, foldr)
+
+import Prelude hiding (any, all, concat, foldr, sum)
 import Data.TicTacToe.Position
 import Data.TicTacToe.Player
 import Data.TicTacToe.GameResult
-import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Foldable
 import Data.List(intercalate)
+import Data.List.NonEmpty
 import Data.Maybe
 
+data Empty =
+  Empty
+  deriving (Eq, Show)
+
+data Token =
+  EmptyToken
+  | PlayerToken Player
+  deriving (Eq, Show)
+
+data Board =
+  Board
+    (NonEmpty Position)
+  deriving (Eq, Show)
+
+data Finished =
+  Finished
+    Board
+    Position
+    !GameResult
+  deriving (Eq, Show)
+
+data Unfinished =
+  UnfinishedEmpty
+  | UnfinishedBoard Board
+  deriving (Eq, Show)
+
+data Unempty =
+  UnemptyFinished Finished
+  | UnemptyBoard Board
+  deriving (Eq, Show)
+
+data BoardMoveResult =
+  UnemptyResult Unempty
+  | AlreadyOccupied
+  deriving (Eq, Show)
+
+class Move from to | from -> to where
+  (-->) ::
+    Position
+    -> from
+    -> to
+
+infixr 5 -->
+
+instance Move Empty Board where
+  p --> Empty =
+    Board (return p)
+
+instance Move Board BoardMoveResult where
+  p --> bd@(Board (p' :| ps)) =
+    let twos ::
+          [a]
+          -> [(a, a)]
+        twos [] =
+          []
+        twos (h:t) =
+          fmap (\a -> (h, a)) t ++ twos t
+        threes ::
+          [a]
+          -> [(a, a, a)]
+        threes [] =
+          []
+        threes (h:t) =
+          fmap (\(a1, a2) -> (h, a1, a2)) (twos t) ++ threes t
+        split ::
+          Eq a =>
+          a
+          -> [a]
+          -> Maybe ([a], [a], Int)
+        split w =
+          let at ::
+                (Int -> Int)
+                -> (a -> a)
+                -> (a, a, Int)
+                -> (a, a, Int)
+              at n f (a1, a2, b) =
+                if even b
+                then (f a1, a2, n b)
+                else (a1, f a2, n b)
+          in fmap (\v -> at id (w:) v) .
+               foldr (\a r -> r >>= \v ->
+                 if w == a
+                 then Nothing
+                 else Just (at (+1) (a:) v)) (Just ([], [], 0))
+        positions ::
+          [Position]
+        positions =
+          p' : ps
+        splat ::
+          Maybe ([Position], [Position], Int)
+        splat =
+          split p positions
+        pthrees ::
+          Maybe ([(Position, Position, Position)], [(Position, Position, Position)], Int)
+        pthrees =
+          fmap (\(p1, p2, x) -> (threes p1, threes p2, x)) splat
+    in case pthrees of
+         Nothing ->
+           AlreadyOccupied
+         Just (_, _, 9) ->
+           UnemptyResult (UnemptyFinished (Finished bd p draw))
+         Just (l1, l2, n) ->
+           let findWin (l, pl) e = if any (\(q1, q2, q3) -> sum (fmap magic [q1, q2, q3]) == 15) l
+                                   then UnemptyResult (UnemptyFinished (Finished bd p (win pl)))
+                                   else e
+           in if n == 9
+              then UnemptyResult (UnemptyFinished (Finished bd p draw))
+              else findWin (if even n then (l1, player1) else (l2, player2)) (UnemptyResult (UnemptyBoard (Board (p :| positions))))
+
+instance Move Unfinished BoardMoveResult where
+  p --> UnfinishedEmpty =
+    UnemptyResult (UnemptyBoard (p --> Empty))
+  p --> UnfinishedBoard b =
+    p --> b
+
+instance Move Unempty BoardMoveResult where
+  _ --> UnemptyFinished f =
+    UnemptyResult (UnemptyFinished f)
+  p --> UnemptyBoard b =
+    p --> b
+
+instance Move BoardMoveResult BoardMoveResult where
+  p --> UnemptyResult e =
+    p --> e
+  _ --> AlreadyOccupied =
+    AlreadyOccupied
+
+{-
 data EmptyBoard =
   EmptyBoard
   deriving Eq
@@ -423,142 +550,6 @@ instance BoardLike FinishedBoard where
   showLine (FinishedBoard b _) =
     showLine b
 
-data Unfinished =
-  UnfinishedEmpty EmptyBoard
-  | UnfinishedBoard Board
-  deriving Eq
-
-instance Show Unfinished where
-  show (UnfinishedEmpty b) =
-    show b
-  show (UnfinishedBoard b) =
-    show b
-
-instance Move Unfinished Unempty where
-  p --> UnfinishedEmpty b =
-    UnemptyBoard (p --> b)
-  p --> UnfinishedBoard b =
-    case p --> b of PositionAlreadyOccupied -> UnemptyBoard b
-                    KeepPlaying b' -> UnemptyBoard b'
-                    GameFinished b' -> UnemptyFinished b'
-
-unfinished ::
-  (EmptyBoard -> a)
-  -> (Board -> a)
-  -> Unfinished
-  -> a
-unfinished f _ (UnfinishedEmpty b) =
-  f b
-unfinished _ g (UnfinishedBoard b) =
-  g b
-
-instance BoardLike Unfinished where
-  whoseTurn =
-    unfinished whoseTurn whoseTurn
-
-  whoseNotTurn =
-    unfinished whoseNotTurn whoseNotTurn
-
-  isEmpty =
-    unfinished isEmpty isEmpty
-
-  occupiedPositions =
-    unfinished occupiedPositions occupiedPositions
-
-  moves =
-    unfinished moves moves
-
-  isSubboardOf (UnfinishedEmpty _) (UnfinishedEmpty _) =
-    True
-  isSubboardOf (UnfinishedEmpty _) (UnfinishedBoard _) =
-    True
-  isSubboardOf (UnfinishedBoard _) (UnfinishedEmpty _) =
-    False
-  isSubboardOf (UnfinishedBoard b) (UnfinishedBoard b') =
-    b `isSubboardOf` b'
-
-  isProperSubboardOf (UnfinishedEmpty _) (UnfinishedEmpty _) =
-    False
-  isProperSubboardOf (UnfinishedEmpty _) (UnfinishedBoard _) =
-    True
-  isProperSubboardOf (UnfinishedBoard _) (UnfinishedEmpty _) =
-    False
-  isProperSubboardOf (UnfinishedBoard b) (UnfinishedBoard b') =
-    b `isProperSubboardOf` b'
-
-  playerAt b p =
-    unfinished (`playerAt` p) (`playerAt` p) b
-
-  showBoard =
-    unfinished showBoard showBoard
-
-  showLine =
-    unfinished showLine showLine
-
-data Unempty =
-  UnemptyBoard Board
-  | UnemptyFinished FinishedBoard
-  deriving Eq
-
-instance Show Unempty where
-  show (UnemptyBoard b) =
-    show b
-  show (UnemptyFinished b) =
-    show b
-
-unempty ::
-  (Board -> a)
-  -> (FinishedBoard -> a)
-  -> Unempty
-  -> a
-unempty f _ (UnemptyBoard b) =
-  f b
-unempty _ g (UnemptyFinished b) =
-  g b
-
-instance BoardLike Unempty where
-  whoseTurn =
-    unempty whoseTurn whoseTurn
-
-  whoseNotTurn =
-    unempty whoseNotTurn whoseNotTurn
-
-  isEmpty =
-    unempty isEmpty isEmpty
-
-  occupiedPositions =
-    unempty occupiedPositions occupiedPositions
-
-  moves =
-    unempty moves moves
-
-  isSubboardOf (UnemptyBoard b) (UnemptyBoard b') =
-    b `isSubboardOf` b'
-  isSubboardOf (UnemptyBoard _) (UnemptyFinished _) =
-    True
-  isSubboardOf (UnemptyFinished _) (UnemptyBoard _) =
-    False
-  isSubboardOf (UnemptyFinished b) (UnemptyFinished b') =
-    b `isSubboardOf` b'
-
-  isProperSubboardOf (UnemptyBoard b) (UnemptyBoard b') =
-    b `isProperSubboardOf` b'
-  isProperSubboardOf (UnemptyBoard _) (UnemptyFinished _) =
-    False
-  isProperSubboardOf (UnemptyFinished _) (UnemptyBoard _) =
-    False
-  isProperSubboardOf (UnemptyFinished b) (UnemptyFinished b') =
-    b `isProperSubboardOf` b'
-
-  playerAt b p =
-    unempty (`playerAt` p) (`playerAt` p) b
-
-  showBoard =
-    unempty showBoard showBoard
-
-  showLine =
-    unempty showLine showLine
-
 -- not exported
 
 pos ::
@@ -579,3 +570,4 @@ showPositionMap m =
             , "=.=", pos' W , "=.=", pos' C , "=.=", pos' E
             , "=.=", pos' SW, "=.=", pos' S , "=.=", pos' SE, "=."
             ]
+  -}
