@@ -19,7 +19,7 @@ Player
 data Player =
   Player1
   | Player2
-  deriving (Eq, Ord, Enum)
+  deriving (Eq, Ord)
 
 instance Show Player where
   show Player1 = "Player 1"

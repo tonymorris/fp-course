@@ -16,7 +16,7 @@ data Position =
   | SW -- ^ South-west (bottom left).
   | S -- ^ South (bottom centre).
   | SE -- ^ South-east (bottom right).
-  deriving (Eq, Ord, Enum, Bounded)
+  deriving (Eq, Ord, Bounded)
 
 -- |
 --
@@ -32,6 +32,7 @@ instance Show Position where
   show W  = "W "
   show C  = "C "
 
+-- todo Prism
 magic ::
   Position
   -> Int
