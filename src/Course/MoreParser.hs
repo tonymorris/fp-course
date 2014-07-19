@@ -79,7 +79,7 @@ commaTok =
 quote ::
   Parser Char
 quote =
-  is '"' ||| is '\''
+  is '"' ||| is '\'' --' for github syntax highlighting
 
 -- | Write a function that parses the given string (fails otherwise).
 --
@@ -187,6 +187,9 @@ noneof s =
 --
 -- >>> isErrorResult (parse (between (is '[') (is ']') character) "abc]")
 -- True
+--
+-- or
+-- between o c a = o >>> a >>= \v -> c >>> pure v
 between ::
   Parser o
   -> Parser c
