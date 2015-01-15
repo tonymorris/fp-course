@@ -75,6 +75,18 @@ headOr ::
 headOr =
   foldRight const
 
+-- | A re-implementation of `headOr` that uses pattern-matching.
+--
+-- prop> headOr' x l == headOr x l
+headOr' ::
+  a
+  -> List a
+  -> a
+headOr' d Nil =
+  d
+headOr' _ (h:._) =
+  h  
+
 -- | The product of the elements of a list.
 --
 -- >>> product (1 :. 2 :. 3 :. Nil)
@@ -87,6 +99,17 @@ product ::
   -> Int
 product =
   foldLeft (*) 1
+
+-- | A re-implementation of `product` that uses pattern-matching.
+--
+-- prop> product' x == product x
+product' ::
+  List Int
+  -> Int
+product' Nil =
+  1
+product' (h:.t) =
+  h * product' t  
 
 -- | Sum the elements of the list.
 --
@@ -103,6 +126,17 @@ sum ::
 sum =
   foldLeft (+) 0
 
+-- | A re-implementation of `sum` that uses pattern-matching.
+--
+-- prop> sum' x == sum x
+sum' ::
+  List Int
+  -> Int
+sum' Nil =
+  0
+sum' (h:.t) =
+  h + sum' t  
+
 -- | Return the length of the list.
 --
 -- >>> length (1 :. 2 :. 3 :. Nil)
@@ -114,6 +148,17 @@ length ::
   -> Int
 length =
   foldLeft (const . succ) 0
+
+-- | A re-implementation of `length` that uses pattern-matching.
+--
+-- prop> length' x == length x
+length' ::
+  List a
+  -> Int
+length' Nil =
+  0
+length' (_:.t) =
+  1 + length' t  
 
 -- | Map the given function on each element of the list.
 --
@@ -129,6 +174,18 @@ map ::
   -> List b
 map f =
   foldRight (\a b -> f a :. b) Nil
+
+-- | A re-implementation of `map` that uses pattern-matching.
+--
+-- prop> map' (+1) x == map (+1) x
+map' ::
+  (a -> b)
+  -> List a
+  -> List b
+map' _ Nil =
+  Nil
+map' f (h:.t) =
+  f h :. map' f t
 
 -- | Return elements satisfying the given predicate.
 --
@@ -146,6 +203,23 @@ filter ::
   -> List a
 filter f =
   foldRight (\a -> if f a then (a:.) else id) Nil
+
+-- | A re-implementation of `filter` that uses pattern-matching.
+--
+-- prop> filter' even x == filter even x
+filter' ::
+  (a -> Bool)
+  -> List a
+  -> List a
+filter' _ Nil =
+  Nil
+filter' f (h:.t) =
+  let r = filter f t
+  in if f h
+       then
+         h :. r
+       else 
+         r
 
 -- | Append two lists to a new list.
 --
@@ -168,6 +242,20 @@ filter f =
 
 infixr 5 ++
 
+-- | A re-implementation of `(++)` that uses pattern-matching.
+--
+-- prop> (x ++ y) == (x ++. y)
+(++.) ::
+  List a
+  -> List a
+  -> List a
+Nil ++. y =
+  y
+(h:.t) ++. y =
+  h :. (t ++. y)
+
+infixr 5 ++.
+
 -- | Flatten a list of lists to a list.
 --
 -- >>> flatten ((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
@@ -183,6 +271,17 @@ flatten ::
   -> List a
 flatten =
   foldRight (++) Nil
+
+-- | A re-implementation of `flatten` that uses pattern-matching.
+--
+-- prop> flatten' x == flatten x
+flatten' ::
+  List (List a)
+  -> List a
+flatten' Nil =
+  Nil
+flatten' (h:.t) =
+  h ++ flatten' t
 
 -- | Map a function then flatten to a list.
 --
@@ -200,6 +299,18 @@ flatMap ::
   -> List b
 flatMap f =
   flatten . map f
+
+-- | A re-implementation of `flatMap` that uses pattern-matching.
+--
+-- prop> let f = (\n -> if even n then n:.n:.Nil else (n+1):.Nil) in flatMap' f x == flatMap f x
+flatMap' ::
+  (a -> List b)
+  -> List a
+  -> List b
+flatMap' _ Nil =
+  Nil
+flatMap' f (h:.t) =
+  f h ++ flatMap' f t
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -239,6 +350,25 @@ seqOptional ::
 seqOptional =
   foldRight (twiceOptional (:.)) (Full Nil)
 
+-- | A re-implementation of `seqOptional` that uses pattern-matching.
+--
+-- prop> seqOptional' x == seqOptional x
+seqOptional' ::
+  List (Optional a)
+  -> Optional (List a)
+seqOptional' Nil =
+  Full Nil
+seqOptional' (h:.t) =
+  case h of
+    Empty ->
+      Empty
+    Full a ->
+      case seqOptional' t of
+        Empty ->
+          Empty
+        Full r ->
+          Full (a :. r)
+
 -- | Find the first element in the list matching the predicate.
 --
 -- >>> find even (1 :. 3 :. 5 :. Nil)
@@ -263,6 +393,22 @@ find p x =
   case filter p x of
     Nil -> Empty
     h:._ -> Full h
+
+-- | A re-implementation of `find` that uses pattern-matching.
+--
+-- prop> find' even x == find even x
+find' ::
+  (a -> Bool)
+  -> List a
+  -> Optional a
+find' _ Nil =
+  Empty
+find' f (h:.t) =
+  if f h
+    then
+      Full h
+    else
+      find' f t 
 
 -- | Determine if the length of the given list is greater than 4.
 --
