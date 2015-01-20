@@ -73,19 +73,7 @@ headOr ::
   -> List a
   -> a
 headOr =
-  error "todo"
-
--- | A re-implementation of `headOr` that uses pattern-matching.
---
--- prop> headOr' x l == headOr x l
-headOr' ::
-  a
-  -> List a
-  -> a
-headOr' d Nil =
-  d
-headOr' _ (h:._) =
-  h  
+  foldRight const
 
 -- | The product of the elements of a list.
 --
@@ -98,18 +86,7 @@ product ::
   List Int
   -> Int
 product =
-  error "todo"
-
--- | A re-implementation of `product` that uses pattern-matching.
---
--- prop> product' x == product x
-product' ::
-  List Int
-  -> Int
-product' Nil =
-  1
-product' (h:.t) =
-  h * product' t  
+  foldLeft (*) 1
 
 -- | Sum the elements of the list.
 --
@@ -124,18 +101,7 @@ sum ::
   List Int
   -> Int
 sum =
-  error "todo"
-
--- | A re-implementation of `sum` that uses pattern-matching.
---
--- prop> sum' x == sum x
-sum' ::
-  List Int
-  -> Int
-sum' Nil =
-  0
-sum' (h:.t) =
-  h + sum' t  
+  foldLeft (+) 0
 
 -- | Return the length of the list.
 --
@@ -147,18 +113,7 @@ length ::
   List a
   -> Int
 length =
-  error "todo"
-
--- | A re-implementation of `length` that uses pattern-matching.
---
--- prop> length' x == length x
-length' ::
-  List a
-  -> Int
-length' Nil =
-  0
-length' (_:.t) =
-  1 + length' t  
+  foldLeft (const . succ) 0
 
 -- | Map the given function on each element of the list.
 --
@@ -172,20 +127,8 @@ map ::
   (a -> b)
   -> List a
   -> List b
-map =
-  error "todo"
-
--- | A re-implementation of `map` that uses pattern-matching.
---
--- prop> map' (+1) x == map (+1) x
-map' ::
-  (a -> b)
-  -> List a
-  -> List b
-map' _ Nil =
-  Nil
-map' f (h:.t) =
-  f h :. map' f t
+map f =
+  foldRight (\a b -> f a :. b) Nil
 
 -- | Return elements satisfying the given predicate.
 --
@@ -201,25 +144,8 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter =
-  error "todo"
-
--- | A re-implementation of `filter` that uses pattern-matching.
---
--- prop> filter' even x == filter even x
-filter' ::
-  (a -> Bool)
-  -> List a
-  -> List a
-filter' _ Nil =
-  Nil
-filter' f (h:.t) =
-  let r = filter f t
-  in if f h
-       then
-         h :. r
-       else 
-         r
+filter f =
+  foldRight (\a -> if f a then (a:.) else id) Nil
 
 -- | Append two lists to a new list.
 --
@@ -238,23 +164,9 @@ filter' f (h:.t) =
   -> List a
   -> List a
 (++) =
-  error "todo"
+  flip (foldRight (:.))
 
 infixr 5 ++
-
--- | A re-implementation of `(++)` that uses pattern-matching.
---
--- prop> (x ++ y) == (x ++. y)
-(++.) ::
-  List a
-  -> List a
-  -> List a
-Nil ++. y =
-  y
-(h:.t) ++. y =
-  h :. (t ++. y)
-
-infixr 5 ++.
 
 -- | Flatten a list of lists to a list.
 --
@@ -270,18 +182,7 @@ flatten ::
   List (List a)
   -> List a
 flatten =
-  error "todo"
-
--- | A re-implementation of `flatten` that uses pattern-matching.
---
--- prop> flatten' x == flatten x
-flatten' ::
-  List (List a)
-  -> List a
-flatten' Nil =
-  Nil
-flatten' (h:.t) =
-  h ++ flatten' t
+  foldRight (++) Nil
 
 -- | Map a function then flatten to a list.
 --
@@ -297,20 +198,8 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap =
-  error "todo"
-
--- | A re-implementation of `flatMap` that uses pattern-matching.
---
--- prop> let f = (\n -> if even n then n:.n:.Nil else (n+1):.Nil) in flatMap' f x == flatMap f x
-flatMap' ::
-  (a -> List b)
-  -> List a
-  -> List b
-flatMap' _ Nil =
-  Nil
-flatMap' f (h:.t) =
-  f h ++ flatMap' f t
+flatMap f =
+  flatten . map f
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -320,7 +209,7 @@ flattenAgain ::
   List (List a)
   -> List a
 flattenAgain =
-  error "todo"
+  flatMap id
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -348,26 +237,7 @@ seqOptional ::
   List (Optional a)
   -> Optional (List a)
 seqOptional =
-  error "todo"
-
--- | A re-implementation of `seqOptional` that uses pattern-matching.
---
--- prop> seqOptional' x == seqOptional x
-seqOptional' ::
-  List (Optional a)
-  -> Optional (List a)
-seqOptional' Nil =
-  Full Nil
-seqOptional' (h:.t) =
-  case h of
-    Empty ->
-      Empty
-    Full a ->
-      case seqOptional' t of
-        Empty ->
-          Empty
-        Full r ->
-          Full (a :. r)
+  foldRight (twiceOptional (:.)) (Full Nil)
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -389,24 +259,10 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo"
-
--- | A re-implementation of `find` that uses pattern-matching.
---
--- prop> find' even x == find even x
-find' ::
-  (a -> Bool)
-  -> List a
-  -> Optional a
-find' _ Nil =
-  Empty
-find' f (h:.t) =
-  if f h
-    then
-      Full h
-    else
-      find' f t 
+find p x =
+  case filter p x of
+    Nil -> Empty
+    h:._ -> Full h
 
 -- | Determine if the length of the given list is greater than 4.
 --
@@ -424,8 +280,10 @@ find' f (h:.t) =
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 =
-  error "todo"
+lengthGT4 (_:._:._:._:._:._) =
+  True
+lengthGT4 _ =
+  False
 
 -- | Reverse a list.
 --
@@ -442,7 +300,7 @@ reverse ::
   List a
   -> List a
 reverse =
-  error "todo"
+  foldLeft (flip (:.)) Nil
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -456,8 +314,8 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce =
-  error "todo"
+produce f a =
+  a :. produce f (f a)
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
@@ -472,7 +330,77 @@ notReverse ::
   List a
   -> List a
 notReverse =
-  error "todo"
+  reverse -- impossible
+-- For the sake of discussion, let's assume that,
+-- xs, ys :: List a
+-- x, y :: a
+-- We are given the following properties
+-- notReverse xs ++ notReverse ys = notReverse (ys ++ xs)  -- Eq. 1
+-- notReverse (x :. Nil) = x :. Nil                        -- Eq. 2
+--
+-- Now, to define
+--   notReverse Nil,
+-- we, first, observe that
+-- notReverse (x :. Nil) ++ notReverse Nil                 -- Eq. 3
+--   = notReverse (Nil ++ (x :. Nil))                      -- using Eq. 1
+--   = notReverse (x :. Nil)                               -- defn of (++)
+--   = x :. Nil                                            -- using Eq. 2
+--
+-- And
+-- notReverse (x :. Nil) ++ notReverse Nil                 -- Eq. 4
+--   = (x :. Nil) ++ notReverse Nil                        -- using Eq. 2
+--
+-- Since, the LHS of Eq. 3 and the LHS of Eq. 4 are the same,
+-- the RHS of Eq. 4 must be equal to the RHS of Eq. 3, i.e.,
+-- (x :. Nil) ++ notReverse Nil = x :. Nil
+--                              = (x :. Nil) ++ Nil        -- defn of (++)
+-- => notReverse Nil = Nil                                 -- Eq. 5
+--
+-- Next, we see that
+-- notReverse (x :. Nil) ++ notReverse (y :. Nil)          -- Eq. 6
+--   = notReverse ((y :. Nil) ++ (x :. Nil))               -- using Eq. 1
+--   = notReverse (y :. x :. Nil)                          -- defn of (++)
+-- And that
+-- notReverse (x :. Nil) ++ notReverse (y :. Nil)          -- Eq. 7
+--   = (x :. Nil) ++ (y :. Nil)                            -- using Eq. 2
+--   = x :. y :. Nil                                       -- defn of (++)
+--
+-- Again, since the LHS of both Eq. 6 and Eq 7. are the same,
+-- the RHS of Eq. 6 and 7 must be the same, i.e.,
+-- notReverse (y :. x :. Nil) = x :. y :. Nil              -- Eq. 8
+-- Or, simply (using variable renaming), we get
+-- notReverse (x :. y :. Nil) = y :. x :. Nil              -- Eq. 8'
+--
+-- Now, we want to prove that Eq. 1 and Eq. 2 imply 'reverse', using
+-- mathematical induction.
+--
+-- We note that
+-- notReverse Nil = Nil = reverse Nil                      -- using Eq. 5, defn of reverse
+-- notReverse (x :. Nil) = (x :. Nil) = reverse (x :. Nil) -- using Eq. 2, defn of reverse
+-- notReverse (x :. y :. Nil) = (y :. x :. Nil)            -- using Eq. 1
+--                            = reverse (x :. y :. Nil)    -- defn of reverse
+-- i.e., notReverse is equal to reverse for cases when 'List a' has 0,
+-- 1, and 2 elements.
+--
+-- Assume that it is true when 'List a' has n (n > 0) elements,
+-- notReverse (x1 :. x2 :. ... :. xn :. Nil)               -- Eq. 9
+--   = (xn :. x{n-1} :. ... :. x1 :. Nil)
+--   = reverse (x1 :. x2 :. ... :. xn :. Nil)              -- defn of reverse
+--
+-- Now,
+-- notReverse (x1 :. x2 :. ... :. xn :. x{n+1} :. Nil)
+--   = notReverse ((x1 :. x2 :. ... :. xn :. Nil) ++ (x{n+1} :. Nil))  -- defn of (++)
+--   = notReverse (x{n+1} :. Nil) ++ notReverse ((x1 :. x2 :. ... :. xn :. Nil)  -- using Eq. 1
+--   = (x{n+1} :. Nil) ++ (xn :. x{n-1} :. ... :. x1 :. Nil)  -- using Eq. 2, Eq. 9 (assumption)
+--   = (x{n+1} :. xn :. ... :. x1 :. Nil)                  -- defn of (++)
+--   = reverse (x1 :. x2 :. ... :. xn :. x{n+1} :. Nil)    -- defn of reverse
+--
+-- Since,
+--   - notReverse is equal to reverse for cases when 'List a' has 0, 1, and 2
+--     elements, and
+--   - if we assume that it is true when 'List a' has n (for some n > 0)
+--     elements, it is also true when 'List a' has n+1 elements,
+-- by mathematical induction notReverse is equal to reverse for all n in [0 ..].
 
 largeList ::
   List Int
