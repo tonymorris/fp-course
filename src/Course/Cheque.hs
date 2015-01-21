@@ -280,23 +280,6 @@ showDigit3 d =
         D3 a Zero Zero -> showd a ++ " hundred"
         D3 a b c -> showd a ++ " hundred and " ++ showDigit3 (D2 b c)
 
-toDot ::
-  Chars
-  -> (List Digit, Chars)
-toDot =
-  let toDot' x Nil =
-        (x, Nil)
-      toDot' x (h:.t) =
-        let move = case fromChar h of
-                     Full n -> toDot' . (:.) n
-                     Empty -> if h == '.'
-                                  then
-                                    (,)
-                                  else
-                                     toDot'
-        in move x t
-  in toDot' Nil
-
 illionate ::
   List Digit
   -> Chars
@@ -321,7 +304,7 @@ illionate =
         todigits acc is t
       todigits acc (i:._) (s:._) =
         (showDigit3 (D1 s) ++ space i) :. acc
-  in unwords . todigits Nil illion
+  in unwords . todigits Nil illion . reverse
 
 -- | Take a numeric value and produce its English output.
 --
@@ -400,7 +383,7 @@ dollars ::
   Chars
   -> Chars
 dollars x =
-  let (d, c) = toDot (dropWhile (`notElem` ('.':.listh ['1'..'9'])) x)
+  let (d, c) = break (== '.') (dropWhile (`notElem` ('.':.listh ['1'..'9'])) x)
       c' =
         case listOptional fromChar c of
           Nil -> "zero cents"
@@ -408,8 +391,8 @@ dollars x =
           (a:.b:._) -> showDigit3 (D2 a b) ++ " cents"
           (a:._) -> showDigit3 (D2 a Zero) ++ " cents"
       d' =
-        case d of
+        case listOptional fromChar d of
           Nil -> "zero dollars"
           (One:.Nil) -> "one dollar"
-          _ -> illionate d ++ " dollars"
+          xs -> illionate xs ++ " dollars"
   in d' ++ " and " ++ c'
