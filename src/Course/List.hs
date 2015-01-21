@@ -402,6 +402,8 @@ notReverse =
 --     elements, it is also true when 'List a' has n+1 elements,
 -- by mathematical induction notReverse is equal to reverse for all n in [0 ..].
 
+---- End of list exercises
+
 largeList ::
   List Int
 largeList =
