@@ -236,7 +236,7 @@ betweenCharTok a b =
 
 -- | Write a function that parses 4 hex digits and return the character value.
 --
--- /Tip:/ Use `readHex`, `isHexDigit`, `replicate`, `satisfy` and the monad instance.
+-- /Tip:/ Use `readHex`, `isHexDigit`, `replicate`, `satisfy`.
 --
 -- >>> parse hex "0010"
 -- Result >< '\DLE'
@@ -255,7 +255,7 @@ hex =
   let hInt s = case readHex s of
                  Empty -> 0
                  Full n -> n
-  in chr . hInt <$> replicateA 4 (satisfy isHexDigit) 
+  in chr . hInt <$> thisMany 4 (satisfy isHexDigit) 
 
 -- | Write a function that parses the character 'u' followed by 4 hex digits and return the character value.
 --
