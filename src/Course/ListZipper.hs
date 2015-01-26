@@ -257,10 +257,9 @@ findLeft ::
   (a -> Bool)
   -> ListZipper a
   -> MaybeListZipper a
-findLeft p (ListZipper ls x rs) =
-  case break p (x:.ls) of
-    (rs', x':.ls') -> IsZ (ListZipper ls' x' (reverse rs' ++ rs))
-    _ -> IsNotZ
+findLeft p z@(ListZipper _ x _)
+  | p x       = IsZ z
+  | otherwise = findLeft p -<< moveLeft z
 
 -- | Seek to the right for a location matching a predicate, starting from the
 -- current one.
@@ -275,10 +274,9 @@ findRight ::
   (a -> Bool)
   -> ListZipper a
   -> MaybeListZipper a
-findRight p (ListZipper ls x rs) =
-  case break p (x:.rs) of
-    (ls', x':.rs') -> IsZ (ListZipper (reverse ls' ++ ls) x' rs')
-    _ -> IsNotZ
+findRight p z@(ListZipper _ x _)
+  | p x       = IsZ z
+  | otherwise = findRight p -<< moveRight z
 
 -- | Move the zipper left, or if there are no elements to the left, go to the far right.
 --
@@ -322,10 +320,9 @@ moveRightLoop (ListZipper l x (h:.t)) =
 moveLeft ::
   ListZipper a
   -> MaybeListZipper a
-moveLeft (ListZipper Nil _ _) =
-  IsNotZ
-moveLeft (ListZipper (h:.t) x r) =
-  IsZ (ListZipper t h (x:.r))
+moveLeft z
+  | hasLeft z = IsZ (moveLeftLoop z)
+  | otherwise = IsNotZ
 
 -- | Move the zipper one position to the right.
 --
@@ -337,10 +334,9 @@ moveLeft (ListZipper (h:.t) x r) =
 moveRight ::
   ListZipper a
   -> MaybeListZipper a
-moveRight (ListZipper _ _ Nil) =
-  IsNotZ
-moveRight (ListZipper l x (h:.t)) =
-  IsZ (ListZipper (x:.l) h t)
+moveRight z
+  | hasRight z = IsZ (moveRightLoop z)
+  | otherwise  = IsNotZ
 
 -- | Swap the current focus with the value to the left of focus.
 --
@@ -453,15 +449,10 @@ moveLeftN' ::
   Int
   -> ListZipper a
   -> Either Int (ListZipper a)
-moveLeftN' n z =
-  let moveLeftN'' n' z' q
-          | n' == 0 = Right z'
-          | n' < 0 = moveRightN' (negate n') z
-          | otherwise =
-            case moveLeft z' of
-                IsZ zz -> moveLeftN'' (n' - 1) zz (q + 1)
-                IsNotZ -> Left q
-  in moveLeftN'' n z 0
+moveLeftN' n z@(ListZipper l _ r) =
+  case moveLeftN n z of
+    IsZ x  -> Right x
+    IsNotZ -> Left (length (if n > 0 then l else r))
 
 -- | Move the focus right the given number of positions. If the value is negative, move left instead.
 -- If the focus cannot be moved, the given number of times, return the value by which it can be moved instead.
@@ -484,15 +475,7 @@ moveRightN' ::
   Int
   -> ListZipper a
   -> Either Int (ListZipper a)
-moveRightN' n z =
-  let moveRightN'' n' z' q
-          | n' == 0 = Right z'
-          | n' < 0 = moveLeftN' (negate n') z
-          | otherwise =
-            case moveRight z' of
-                IsZ zz -> moveRightN'' (n' - 1) zz (q + 1)
-                IsNotZ -> Left q
-  in moveRightN'' n z 0
+moveRightN' = moveLeftN' . negate
 
 -- | Move the focus to the given absolute position in the zipper. Traverse the zipper only to the extent required.
 --
@@ -508,14 +491,7 @@ nth ::
   Int
   -> ListZipper a
   -> MaybeListZipper a
-nth i z =
-  if i < 0
-    then
-      IsNotZ
-    else
-      case moveLeftN' i z of
-             Left a -> moveRightN (i-a) z
-             Right (ListZipper l _ _) -> moveLeftN (length l) z
+nth n z@(ListZipper l _ _) = moveLeftN (length l - n) z
 
 -- | Return the absolute position of the current focus in the zipper.
 --
