@@ -14,8 +14,11 @@ fastAnagrams ::
   Chars
   -> Filename
   -> IO (List Chars)
-fastAnagrams name f =
-  (flip (filter . flip S.member) (permutations name) . S.fromList . hlist . lines) <$> readFile f
+fastAnagrams name =
+    (elems . S.intersection (fromList (permutations name)) . fromList . lines <$>) . readFile
+  where
+    fromList = S.fromList . hlist . map NoCaseString
+    elems = map ncString . listh . S.elems
 
 newtype NoCaseString =
   NoCaseString {
