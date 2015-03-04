@@ -236,7 +236,7 @@ betweenCharTok a b =
 
 -- | Write a function that parses 4 hex digits and return the character value.
 --
--- /Tip:/ Use `readHex`, `isHexDigit`, `replicate`, `satisfy` and the monad instance.
+-- /Tip:/ Use `readHex`, `isHexDigit`, `replicateA`, `satisfy` and the monad instance.
 --
 -- >>> parse hex "0010"
 -- Result >< '\DLE'

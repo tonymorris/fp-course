@@ -12,6 +12,8 @@
 
 module Course.List where
 
+import qualified Control.Applicative as A
+import qualified Control.Monad as M
 import Course.Core
 import Course.Optional
 import qualified System.Environment as E
@@ -756,6 +758,16 @@ show' ::
   -> List Char
 show' =
   listh . show
+
+instance P.Functor List where
+  fmap =
+    M.liftM
+
+instance A.Applicative List where
+  (<*>) =
+    M.ap
+  pure =
+    (:. Nil)
 
 instance P.Monad List where
   (>>=) =

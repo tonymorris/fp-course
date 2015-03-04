@@ -190,8 +190,10 @@ listWithState f m x =
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
 -- because it results in a recurring sequence.
 --
--- /Tip:/ Use `first` and `produce`.
-----
+-- /Tip:/ Use `findM` with `State` and `produce`.
+--
+-- /Tip:/ Use `join` to write a @square@ function.
+--
 -- /Tip:/ Use library functions: @Optional#contains@, @Data.Char#digitToInt@.
 --
 -- >>> isHappy 4
