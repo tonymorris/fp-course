@@ -2,23 +2,22 @@
 *#*
 
 # CABAL
-dist
-
-# cabal-dev
+/dist
 /cabal-dev
+/.cabal-sandbox
+/cabal.sandbox.config
 
 # Haskell Program Coverage
-.hpc
+/.hpc
 
 # Leksah
 *.lkshs
 
 # Intellij IDEA
-.idea/workspace.xml
-.idea/ant.xml
+/.idea
 
 # darcs
-_darcs
+/_darcs
 
 # ctags
 TAGS
@@ -26,3 +25,6 @@ TAGS
 # sbt
 /project
 /target
+
+*.swp
+
