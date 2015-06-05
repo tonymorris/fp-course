@@ -4,7 +4,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 -- + Complete the 10 exercises below by filling out the function bodies.
---   Replace the function bodies (error "todo") with an appropriate solution.
+--   Replace the function bodies (error "todo: ...") with an appropriate
+--   solution.
 -- + These exercises may be done in any order, however:
 --   Exercises are generally increasing in difficulty, though some people may find later exercise easier.
 -- + Bonus for using the provided functions or for using one exercise solution to help solve another.
@@ -25,7 +26,7 @@ import qualified Numeric as N
 -- >>> import Test.QuickCheck
 -- >>> import Course.Core(even, id, const)
 -- >>> import qualified Prelude as P(fmap, foldr)
--- >>> instance Arbitrary a => Arbitrary (List a) where arbitrary = P.fmap (P.foldr (:.) Nil) arbitrary
+-- >>> instance Arbitrary a => Arbitrary (List a) where arbitrary = P.fmap ((P.foldr (:.) Nil) :: ([a] -> List a)) arbitrary
 
 -- BEGIN Helper functions and data types
 

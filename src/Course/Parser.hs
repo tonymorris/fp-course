@@ -109,7 +109,7 @@ character =
 -- >>> parse (mapParser succ character) "amz"
 -- Result >mz< 'b'
 --
--- parse (mapParser (+10) (valueParser 7)) ""
+-- >>> parse (mapParser (+10) (valueParser 7)) ""
 -- Result >< 17
 mapParser ::
   (a -> b)
@@ -249,7 +249,6 @@ list k =
 
 -- | Return a parser that produces at least one value from the given parser then
 -- continues producing a list of values from the given parser (to ultimately produce a non-empty list).
--- The returned parser fails if The input is empty.
 --
 -- /Tip:/ Use @bindParser@, @list@ and @valueParser@.
 --

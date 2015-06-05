@@ -21,7 +21,7 @@ import qualified Prelude as P
 -- >>> import qualified Prelude as P
 -- >>> let optional e _ Empty = e; optional _ f (Full a) = f a
 -- >>> instance Arbitrary a => Arbitrary (Optional a) where arbitrary = P.fmap (maybe Empty Full) arbitrary
--- >>> instance Arbitrary a => Arbitrary (List a) where arbitrary = P.fmap (P.foldr (:.) Nil) arbitrary
+-- >>> instance Arbitrary a => Arbitrary (List a) where arbitrary = P.fmap (P.foldr (:.) Nil :: ([a] -> List a)) arbitrary
 -- >>> instance Arbitrary a => Arbitrary (ListZipper a) where arbitrary = do l <- arbitrary; x <- arbitrary; r <- arbitrary; P.return (ListZipper l x r)
 
 -- A `ListZipper` is a focussed position, with a list of values to the left and to the right.
@@ -301,7 +301,7 @@ findRight p (ListZipper ls x rs) =
       IsNotZ
     (ls', x':.rs') ->
       IsZ (ListZipper (reverse ls' ++ x :. ls) x' rs')
-    
+
 -- | Move the zipper left, or if there are no elements to the left, go to the far right.
 --
 -- >>> moveLeftLoop (zipper [3,2,1] 4 [5,6,7])
