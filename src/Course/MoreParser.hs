@@ -343,7 +343,7 @@ eof =
              Nil -> Result Nil ()
              x -> ErrorResult (ExpectedEof x))
 
--- | Write a parser that produces a characer that satisfies all of the given predicates.
+-- | Write a parser that produces a character that satisfies all of the given predicates.
 --
 -- /Tip:/ Use `sequence` and @Data.List#and@.
 --
@@ -367,7 +367,7 @@ satisfyAll ::
 satisfyAll ps =
   satisfy (and  . sequence ps)
 
--- | Write a parser that produces a characer that satisfies any of the given predicates.
+-- | Write a parser that produces a character that satisfies any of the given predicates.
 --
 -- /Tip:/ Use `sequence` and @Data.List#or@.
 --
