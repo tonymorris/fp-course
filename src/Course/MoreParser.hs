@@ -9,8 +9,7 @@ import Course.Parser
 import Course.List
 import Course.Optional
 import Course.Applicative
-import Course.Apply
-import Course.Bind
+import Course.Monad
 import Course.Functor
 import Course.Traversable
 
@@ -62,6 +61,12 @@ tok p =
 
 -- | Write a function that parses the given char followed by 0 or more spaces.
 --
+-- >>> parse (charTok 'a') "abc"
+-- Result >bc< 'a'
+--
+-- >>> isErrorResult (parse (charTok 'a') "dabc")
+-- True
+-- 
 -- /Tip:/ Use `tok` and `is`.
 charTok ::
   Char
@@ -71,6 +76,12 @@ charTok =
 
 -- | Write a parser that parses a comma ',' followed by 0 or more spaces.
 --
+-- >>> parse commaTok ",123"
+-- Result >123< ','
+--
+-- >>> isErrorResult( parse commaTok "1,23")
+-- True
+-- 
 -- /Tip:/ Use `charTok`.
 commaTok ::
   Parser Char

@@ -5,9 +5,8 @@ module Course.Compose where
 
 import Course.Core
 import Course.Functor
-import Course.Apply
 import Course.Applicative
-import Course.Bind
+import Course.Monad
 
 -- Exactly one of these exercises will not be possible to achieve. Determine which.
 
@@ -20,20 +19,17 @@ instance (Functor f, Functor g) =>
   f <$> Compose g =
     Compose ((f <$>) <$> g)
 
-instance (Apply f, Apply g) =>
-  Apply (Compose f g) where
--- Implement the (<*>) function for an Apply instance for Compose
-  Compose f <*> Compose a =
-    Compose (lift2 (<*>) f a)
-
 instance (Applicative f, Applicative g) =>
   Applicative (Compose f g) where
 -- Implement the pure function for an Applicative instance for Compose
   pure =
     Compose . pure . pure
+-- Implement the (<*>) function for an Applicative instance for Compose
+  Compose f <*> Compose a =
+    Compose (lift2 (<*>) f a)
 
-instance (Bind f, Bind g) =>
-  Bind (Compose f g) where
--- Implement the (=<<) function for a Bind instance for Compose
+instance (Monad f, Monad g) =>
+  Monad (Compose f g) where
+-- Implement the (=<<) function for a Monad instance for Compose
   (=<<) =
     error "impossible"
