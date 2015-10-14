@@ -19,7 +19,7 @@ module Course.Applicative(
 ) where
 
 import Course.Core
-import Course.Functor
+import Course.Functor hiding ((<$>))
 import Course.Id
 import Course.List
 import Course.Optional
@@ -251,7 +251,7 @@ lift4 ::
 lift4 =
   error "todo: Course.Applicative#lift4"
 
--- | Sequence, discarding the value of the first argument.
+-- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
 --
 -- >>> [1,2,3] *> [4,5,6]
@@ -277,7 +277,7 @@ lift4 =
 (*>) =
   error "todo: Course.Applicative#(*>)"
 
--- | Sequence, discarding the value of the second argument.
+-- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
 --
 -- >>> [1,2,3] <* [4,5,6]
