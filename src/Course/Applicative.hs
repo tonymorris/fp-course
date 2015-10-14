@@ -23,7 +23,7 @@ import Course.Functor hiding ((<$>))
 import Course.Id
 import Course.List
 import Course.Optional
-import qualified Prelude as P
+import qualified Prelude as P(fmap, return, (>>=))
 
 -- | All instances of the `Applicative` type-class must satisfy three laws.
 -- These laws are not checked by the compiler. These laws are given as:
@@ -61,8 +61,8 @@ infixl 4 <*>
   (a -> b)
   -> f a
   -> f b
-f <$> a =
-  pure f <*> a
+(<$>) =
+  (<*>) . pure
 
 -- | Insert into Id.
 --
@@ -156,7 +156,7 @@ instance Applicative ((->) t) where
     -> ((->) t a)
     -> ((->) t b)
   f <*> g =
-    \x -> f x (g x)
+    \t -> f t (g t)
 
 -- | Apply a binary function in the environment.
 --
@@ -183,8 +183,8 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 =
-  error "todo: Course.Applicative#lift2"
+lift2 f a b =
+  f <$> a <*> b
 
 -- | Apply a ternary function in the environment.
 --
@@ -215,8 +215,8 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 =
-  error "todo: Course.Applicative#lift2"
+lift3 f a b c =
+  lift2 f a b <*> c
 
 -- | Apply a quaternary function in the environment.
 --
@@ -248,8 +248,8 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 =
-  error "todo: Course.Applicative#lift4"
+lift4 f a b c d =
+  lift3 f a b c <*> d
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
@@ -275,7 +275,7 @@ lift4 =
   -> f b
   -> f b
 (*>) =
-  error "todo: Course.Applicative#(*>)"
+  lift2 (const id)
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -383,18 +383,6 @@ filtering p =
 -----------------------
 
 instance Applicative IO where
-  pure =
-    P.return
-  f <*> a =
-    f P.>>= \f' -> P.fmap f' a
-
-instance Applicative [] where
-  pure =
-    P.return
-  f <*> a =
-    f P.>>= \f' -> P.fmap f' a
-
-instance Applicative P.Maybe where
   pure =
     P.return
   f <*> a =
