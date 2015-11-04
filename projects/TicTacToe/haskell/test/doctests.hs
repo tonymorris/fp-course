@@ -19,27 +19,12 @@ main =
     : "-hide-all-packages"
     : map ("-package="++) deps ++ sources
 
-sourceDirectories ::
-  [FilePath]
-sourceDirectories =
-  [
-    "src"
-  , "test" </> "src"
-  ]
-
-isSourceFile ::
-  FilePath
-  -> Bool
-isSourceFile p =
-  and [takeFileName p /= "Setup.hs", isSuffixOf ".hs" p]
-
 getSources :: IO [FilePath]
-getSources =
-  liftM (filter isSourceFile . concat) (mapM go sourceDirectories)
-    where
-      go dir = do
-        (dirs, files) <- getFilesAndDirectories dir
-        (files ++) . concat <$> mapM go dirs
+getSources = filter (isSuffixOf ".hs") <$> go "src"
+  where
+    go dir = do
+      (dirs, files) <- getFilesAndDirectories dir
+      (files ++) . concat <$> mapM go dirs
 
 getFilesAndDirectories :: FilePath -> IO ([FilePath], [FilePath])
 getFilesAndDirectories dir = do

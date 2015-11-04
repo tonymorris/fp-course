@@ -3,28 +3,20 @@
 
 # CABAL
 /dist
-/cabal-dev
 /.cabal-sandbox
 /cabal.sandbox.config
 
 # Haskell Program Coverage
 /.hpc
+/*.tix
 
 # Leksah
 *.lkshs
 
 # Intellij IDEA
 /.idea
-
-# darcs
-/_darcs
+*.iml
 
 # ctags
 TAGS
-
-# sbt
-/project
-/target
-
-*.swp
 
