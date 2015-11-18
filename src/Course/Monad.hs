@@ -152,8 +152,8 @@ join =
   f a
   -> (a -> f b)
   -> f b
-(>>=) =
-  error "todo: Course.Monad#(>>=)"
+a >>= f =
+  join (f <$> a)
 
 infixl 1 >>=
 
