@@ -69,8 +69,12 @@ instance Applicative (State s) where
                  in (g z, u))
 
 -- | Implement the `Bind` instance for `State s`.
+--
 -- >>> runState ((const $ put 2) =<< put 1) 0
 -- ((),2)
+--
+-- >>> let modify f = State (\s -> ((), f s)) in runState (modify (+1) >>= \() -> modify (*2)) 7
+-- ((),16)
 instance Monad (State s) where
   (=<<) ::
     (a -> State s b)

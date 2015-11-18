@@ -42,7 +42,7 @@ instance Functor f => Functor (StateT s f) where
   f <$> StateT k =
     StateT ((<$>) (first f) . k)
 
--- | Implement the `Applicative` instance for @StateT s f@ given a @Applicative f@.
+-- | Implement the `Applicative` instance for @StateT s f@ given a @Monad f@.
 --
 -- >>> runStateT (pure 2) 0
 -- (2,0)
@@ -68,6 +68,9 @@ instance Monad f => Applicative (StateT s f) where
 --
 -- >>> runStateT ((const $ putT 2) =<< putT 1) 0
 -- ((),2)
+--
+-- >>> let modify f = StateT (\s -> pure ((), f s)) in runStateT (modify (+1) >>= \() -> modify (*2)) 7
+-- ((),16)
 instance Monad f => Monad (StateT s f) where
   (=<<) ::
     (a -> StateT s f b)
