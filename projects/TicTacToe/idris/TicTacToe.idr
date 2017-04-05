@@ -1,345 +1,220 @@
-module TicTacType
+-- idris v0.12.1
+module Main
+
+import Data.So
+import Data.Vect
 
 %default total
 
-%logging 0
-
--- TODO get rid of this helper
-
-even :  Nat -> Bool
-even Z = True
-even (S Z) = False
-even (S n) = not (even n)
-
--- TODO split Board into Board and ValidBoard, or make it abstract?
-
------------------------------------------------------------------------
--- TIC TAC TYPE
------------------------------------------------------------------------
-
-{- This program represents a game of Tic Tac Type in Idris, really
-   it should be called Naughts and Crosses, but we shall let this
-   language attrocity slide in the name of a good pun. -}
-
------------------------------------------------------------------------
--- PLAYERS
------------------------------------------------------------------------
-
-{- There are two players, X and O, who each play in turn. -}
-
+-- A player is either an X or an O
 data Player = X | O
 
-instance Show Player where
-  show X = "x"
-  show O = "o"
+Show Player where
+  show X = "X"
+  show O = "O"
 
-instance Eq Player where
+Eq Player where
   X == X = True
   O == O = True
-  X == O = False
-  O == X = False
-
-
------------------------------------------------------------------------
--- CELLS
------------------------------------------------------------------------
-
-{- A cell is a position in the game. A cell may be either occupied by a
-   player or unoccupied -}
-
-
-data Cell = Occupied Player | Unoccupied
-
-instance Show Cell where
-  show (Occupied p) = show p
-  show Unoccupied     = "_"
-
-instance Eq Cell where
-  (Occupied a) == (Occupied b) = a == b
-  (Occupied _) == Unoccupied = False
-  Unoccupied == (Occupied _) = False
-  Unoccupied == Unoccupied = True
-
-
------------------------------------------------------------------------
--- POSITIONS
------------------------------------------------------------------------
-
-{- In our default 3x3 game, positions are the finite set of naturals less
-   than 9, which index onto the board from left to right, top to bottom.
-   i.e.
-
-     0 | 1 | 2
-    -----------
-     3 | 4 | 5
-    -----------
-     6 | 7 | 8
-
- -}
-
-
-Position : Type
-Position = Fin 9
-
-{- But given that this is kind of confusing way to deal with identifying
-   a position, we also have these convenience definitions that let us
-   treat a co-ordinate as a literal position.
-   i.e.
-
-     nw | n | ne
-    -------------
-     w  | c | e
-    -------------
-     sw | s | se
-
- -}
-
-
-{- North-West, or the Top-Left corner position. -}
-nw : Position
-nw = 0
-
-{- North, or the Top-Center position. -}
-n : Position
-n = 1
-
-{- North-East, or the Top-Right corner position. -}
-ne : Position
-ne = 2
-
-{- West, or the Left-Center position. -}
-w : Position
-w = 3
-
-{- Center position. -}
-c : Position
-c = 4
-
-{- East, or the Right-Center position. -}
-e : Position
-e = 5
-
-{- South-West, or the Bottom-Left corner position. -}
-sw : Position
-sw = 6
-
-{- South, or the Bottom-Center position. -}
-s : Position
-s = 7
-
-{- South-East, or the Bottom-Right corner position. -}
-se : Position
-se = 8
-
-
------------------------------------------------------------------------
--- THE BOARD
------------------------------------------------------------------------
-
-{- The board is a 3x3 grid represented as a Vector of length 9. This
-   limits us to the default size, however it could easily be extended
-   with limited effect on the rest of the program (excepting the algorithm
-   that determines a win). -}
-
-data Board = B (Vect 9 Cell)
-
-instance Eq Board where
-  (B a) == (B b) = a == b
-
-instance Show Board where
-  show (B [nw, n,  ne,
-           w,  c,  e,
-           sw, s,  se]) =
-     " " ++ show nw ++ " | " ++ show n  ++ " | " ++ show ne ++ "\n" ++
-     "-----------\n" ++
-     " " ++ show w  ++ " | " ++ show c  ++ " | " ++ show e  ++ "\n" ++
-     "-----------\n" ++
-     " " ++ show sw ++ " | " ++ show s  ++ " | " ++ show se ++ "\n"
-
-{- Next, we will define a bunch of useful combinators for working with
-   boards. Conveniently we get to define these at the value level, even
-   though we will end up using them on the type level most of the time.  -}
-
-
--- Convert a board back to its vectorized form
-toVect : Board -> Vect 9 Cell
-toVect (B v) = v
-
--- An intial empty board
-empty : Board
-empty =
-  B [Unoccupied, Unoccupied, Unoccupied,
-     Unoccupied, Unoccupied, Unoccupied,
-     Unoccupied, Unoccupied, Unoccupied]
-
--- Do we have 3 in a row?
-match : Cell -> Cell -> Cell -> Maybe Player
-match (Occupied a) (Occupied b) (Occupied c) = toMaybe (a == b && b == c) a
-match _ _ _  = Nothing
-
--- Is there a winner on the board?
-winner : Board -> Maybe Player
-winner (B [nw, n,  ne,
-           w,  c,  e,
-           sw, s,  se]) =
-  match ne n nw <|> match e  c w  <|> match se s sw <|> match ne e se <|>
-  match n  c s  <|> match nw w sw <|> match ne c sw <|> match nw c se
-
--- Is this a valid board?
-isValidBoard : Board -> Bool
-isValidBoard board =
-  let xs = sum . map xToInt . toVect $ board in
-  let ys = sum . map oToInt . toVect $ board in
-  xs == ys || xs == (S ys) where
-
-  xToInt Unoccupied = 0
-  xToInt (Occupied X) = 1
-  xToInt (Occupied O) = 0
-
-  oToInt Unoccupied = 0
-  oToInt (Occupied X) = 0
-  oToInt (Occupied O) = 1
-
--- How many positions are occupied ?
-occupied : Board -> Nat
-occupied board =
-  sum . map toInt . toVect $ board where
-
-  toInt Unoccupied = 0
-  toInt (Occupied _) = 1
-
--- What is at the specified position ?
-at : Position -> Board -> Cell
-at position (B vect) = index position vect
-
--- Who's turn is it?
-turn : Board -> Player
-turn board =
-  if even (occupied board) then X else O
-
--- Is this position free?
-free : Position -> Board -> Bool
-free position board =
-  at position board == Unoccupied
-
--- Is this game complete?
-complete : Board -> Bool
-complete board =
-  isJust (winner board) || occupied board == (length . toVect $ board)
-
--- Is this a valid move for the current board?
-isValidMove : Position -> Player -> Board -> Bool
-isValidMove position player board =
-  free position board && (not . isJust) (winner board) && turn board == player
-
-{- We want a data structure to carry the proof that a move is valid for a given
-   board, so we can use it later on. This is more useful than the Bool above. -}
-
-data ValidMove : Board -> Type where
-  IsValidMove : Position -> Player -> (b : Board) -> ValidMove b
-
-{- To construct these, we first build a function that "might" produce a ValidMove
-   depending on the constraints of `isValidMove`. -}
-
-tryValidMove : Position -> Player -> (b : Board) -> Maybe (ValidMove b)
-tryValidMove position player board =
-  toMaybe (isValidMove position player board) (IsValidMove position player board)
-
-{- But the great thing about all these types, is that we can directly construct a
-   valid move if we can prove it. -}
-
-validMove : (position : Position) -> (player : Player) -> (board : Board) ->
-            {default ItIsJust prf : (IsJust (tryValidMove position player board))} -> ValidMove board
-validMove position player board {prf} with (tryValidMove position player board)
-  validMove position player board {prf = ItIsJust} | Just y = y
-
--- Lets run a validate move and produce a new board.
-
-runMove : ValidMove board -> Board
-runMove (IsValidMove position player (B board)) =
-  B $ replaceAt position (Occupied player) board
-
-
-{- Now a similar treatment to create a safe board constructor. -}
-
-tryBoard : Vect 9 Cell -> Maybe Board
-tryBoard vect = let b = B vect in toMaybe (isValidBoard b) b
-
-board : (vect: Vect 9 Cell) -> {default ItIsJust prf : (IsJust (tryBoard vect))} -> Board
-board vect {prf} with (tryBoard vect)
-  board vect {prf = ItIsJust} | Just y = y
-
-
------------------------------------------------------------------------
--- THE GAME
------------------------------------------------------------------------
-
-{- Now we want to build a Game data type that will hold our game state.
-   Importantly, we are now lifting the "Board" to the type level, which
-   means that the type of a game carries around the entire board state. -}
-
-data Game : Board -> Type where
-
-  -- start a new game with an empty board
-  start : Game empty
-
-  -- start from some arbitrary starting point
-  load : (b : Board) -> Game b
-
-  -- make a (guaranteed to be valid) move on the current game
-  move' : {b : Board} -> (m : ValidMove b) -> Game b -> Game (runMove m)
-
-{- Now our "game" library -}
-
--- an alias for validMove which makes it easier to declare moves (go ne)
-move : {board : Board} -> (position : Position) -> (player : Player) -> (game : Game board) ->
-     {default ItIsJust prf : (IsJust (tryValidMove position player board))} -> Game (runMove $ validMove position player board {prf})
-move {board} position player game {prf} = move' (validMove position player board {prf}) game
-
--- A data type to hold a proof that we have a previous game state available
-data Prev : Game b -> Type where
-  HasPrev : {bb : Board} -> {m : ValidMove bb} -> {g : Game bb} ->  Prev (move' m g)
-
--- Give me the board for the current game state.
-toBoard : {b : Board} -> Game b -> Board
-toBoard {b} _ = b
-
--- Has the game started?
-hasStarted : {b : Board} -> Game b -> Bool
-hasStarted {b} _ = occupied b > 0
-
--- What was the previous board? (only if you have a proof that there is a previous board)
-previousBoard : (gg : Game b) -> {default HasPrev prf : (Prev gg)} -> Board
-previousBoard (move' {b} m g) {prf = HasPrev} = b
-
--- Take back the last move? (only if you have a proof that there is a previous board)
-takeBack : (gg : Game b) -> {default HasPrev prf : (Prev gg)} -> Game (previousBoard gg {prf})
-takeBack (move' {b} m g) {prf = HasPrev} = g
-
--- Who if any holds the specified position?
-playerAt : {b: Board} -> Position -> Game b -> Maybe Player
-playerAt {b} p _ = case at p b of
-  Occupied player => Just player
-  Unoccupied => Nothing
-
--- Who won? (if there is final state)
-whoWon : {b : Board} -> Game b -> {default oh prf : so (complete b) } -> Maybe Player
-whoWon {b} _ = winner b
-
-
------------------------------------------------------------------------
--- DEMO
------------------------------------------------------------------------
-
-state0 : ?state0t
-state0 = start
-state0t = proof search
-
---state0x : ?state0xt
---state0x = takeBack state0
---state0xt = proof search
-
-state1 : ?state1t
-state1 = move ne X state0
-state1t = proof search
-
+  _ == _ = False
+
+-- A grid is a Vect of 3 rows, which are each Vects of 3 cells
+Grid : Type
+Grid = Vect 3 (Vect 3 (Maybe Player))
+
+-- Given x < 3 and y < 3, get the cell at (x,y)
+get : Grid
+  -> (x : Fin 3)
+  -> (y : Fin 3)
+  -> Maybe Player
+get g x y = index x (index y g)
+
+-- Given x < 3 and y < 3, update the cell at (x,y)
+set : Grid
+  -> (x : Fin 3)
+  -> (y : Fin 3)
+  -> Maybe Player
+  -> Grid
+set g x y a = replaceAt y (replaceAt x a $ index y g) g
+
+-- A game of tic tac toe is either won by a player, or drawn
+data Result = Draw | Win Player
+
+-- A game is always either in play or finished. If a game is finished, it will have a result
+data Status = InPlay | Finished Result
+
+-- Is the cell at (x,y) occupied?
+occupied : Grid -> Fin 3 -> Fin 3 -> Bool
+occupied g x y = case get g x y of
+                      Nothing => False
+                      _       => True
+
+-- A position on the board
+-- Lifts x and y to type level allow them to be used in proofs
+data Position : Fin 3 -> Fin 3 -> Type where
+  MkPosition : (x : Fin 3) -> (y : Fin 3) -> Position x y
+
+toggle : Player -> Player
+toggle X = O
+toggle O = X
+
+-- A board consists of a Grid, the current Player, and the number of moves played
+--
+-- A valid empty board can always be constructed
+-- The result of a turn is only valid if the previous board was valid, and the Position
+--   to play at was not occupied
+data Board : Grid -> Player -> Nat -> Type where
+  NewBoard : Board (replicate 3 (replicate 3 Nothing)) X 0
+  Turn : Board g p m
+      -> Position x y
+      -> {notOccupied : So (not (occupied g x y))}
+      -> Board (set g x y (Just p)) (toggle p) (S m)
+
+-- A board has a previous state if it was contructed with Turn
+data HasPrevious : Board g p m -> Type where
+  MkHasPrevious : HasPrevious (Turn b pos)
+
+-- Determine the status of a Board
+status : Board g p m -> Status
+status b {g} {m} = case choice . map winner $ conditions g of
+                        Nothing => if m == 9
+                                      then Finished Draw
+                                      else InPlay
+                        Just p  => Finished $ Win p
+  where
+    -- Win conditions
+    conditions : Grid -> List (Vect 3 (Maybe Player))
+    conditions g = let g' = sequence g in [
+      index 0 g -- First row of g
+      , index 1 g -- Second row of g
+      , index 2 g -- Third row of g
+      , index 0 g' -- First column of g (first row of transpose of g)
+      , index 1 g' -- Second column of g (second row of transpose of g)
+      , index 2 g' -- Third column of g (third row of transpose of g)
+      , [get g 0 0, get g 1 1, get g 2 2] -- Top left to bottom right
+      , [get g 2 0, get g 1 1, get g 0 2] -- Bottom left to top right
+      ]
+
+    winner : Vect 3 (Maybe Player) -> Maybe Player
+    winner (Nothing :: b :: c ::[]) = Nothing
+    winner (a :: b :: c ::[]) = if a == b && b == c then a else Nothing
+
+-- Lift a valid Board to a Game and calculate the Status of the Game
+data Game : Board g p m -> Status -> Type where
+  MkGame : (b : Board g p m) -> Game b (status b)
+
+--
+-- API Functions
+--
+
+-- Cannot be called on a game that is Finished, and cannot be called with a position
+--   that is occpuied
+--
+-- Returns a new Game which has a Status that is known at runtime
+move : {b : Board g p m}
+    -> Game b InPlay
+    -> (pos : Position x y)
+    -> {notOccupied : So (not (occupied g x y))}
+    -> (s' : Status ** Game (Turn b pos {notOccupied=notOccupied}) s')
+move game pos {b} {notOccupied} = (_ ** MkGame (Turn b pos {notOccupied=notOccupied}))
+
+-- Can only be called on a game that is Finshed
+whoWon : Game b (Finished res) -> Result
+whoWon game {res} = res
+
+-- Can be called on any Game
+playerAt : {b : Board g p m} -> Game b s -> Position x y -> Maybe Player
+playerAt game (MkPosition x y) {g} = get g x y
+
+-- Can only be called on a Game that is Finished and has exactly 9 moves played
+isDraw : {b : Board g p 9} -> Game b (Finished res) -> Bool
+isDraw game {res = Draw} = True
+isDraw game {res = (Win x)} = False
+
+-- Can only be called on a Game that has a previous state
+--
+-- Returns a Board that has a Grid, Player and number of moves that are known at runtime
+takeMoveBack : (b : Board g p m) -> {hasPrev : HasPrevious b} -> (g' : Grid ** p' : Player ** m' : Nat ** Board g' p' m')
+takeMoveBack (Turn b pos) {hasPrev=MkHasPrevious} = (_ ** _ ** _ ** b)
+
+data Command = Place (x : Fin 3 ** y : Fin 3 ** Position x y)
+             | Back
+
+parseInput : String -> Either String Command
+parseInput str = case str of
+                      "tl" => Right . Place $ (_ ** _ ** MkPosition 0 0)
+                      "tc" => Right . Place $ (_ ** _ ** MkPosition 1 0)
+                      "tr" => Right . Place $ (_ ** _ ** MkPosition 2 0)
+                      "ml" => Right . Place $ (_ ** _ ** MkPosition 0 1)
+                      "mc" => Right . Place $ (_ ** _ ** MkPosition 1 1)
+                      "mr" => Right . Place $ (_ ** _ ** MkPosition 2 1)
+                      "bl" => Right . Place $ (_ ** _ ** MkPosition 0 2)
+                      "bc" => Right . Place $ (_ ** _ ** MkPosition 1 2)
+                      "br" => Right . Place $ (_ ** _ ** MkPosition 2 2)
+                      "back" => Right Back
+                      _    => Left "Invalid command"
+
+showGrid : Grid -> String
+showGrid (t :: m :: b :: []) = "\n" ++ showRow t ++ "\n\n" ++ showRow m ++ "\n\n" ++ showRow b ++ "\n"
+  where
+    showCell : Maybe Player -> String
+    showCell Nothing = "-"
+    showCell (Just p) = show p
+
+    showRow : Vect 3 (Maybe Player) -> String
+    showRow (l :: c :: r :: []) = showCell l ++ " " ++ showCell c ++ " " ++ showCell r
+
+-- Proof that NewBoard does not have a previous state
+Uninhabited (HasPrevious NewBoard) where
+  uninhabited MkHasPrevious impossible
+
+-- Decide if a Board has a previous state and return the proof
+decHasPrevious : (b : Board g p m) -> Dec (HasPrevious b)
+decHasPrevious NewBoard = No uninhabited
+decHasPrevious (Turn z w) = Yes MkHasPrevious
+
+mutual
+  partial
+  runGame : {b : Board g p m} -> Game b InPlay -> IO Result
+  runGame game {g} = do
+    putStrLn $ showGrid g
+    getInput game
+
+  partial
+  gameStep : {b' : Board g' p' m'} -> (s' : Status ** Game b' s') -> IO Result
+  gameStep (InPlay ** game) = runGame game
+  gameStep {g'} (Finished x ** game) = do
+    putStrLn $ showGrid g'
+    return x
+
+  partial
+  getInput : {b : Board g p m} -> Game b InPlay -> IO Result
+  getInput game {b} {g} {p} = do
+    putStr $ show p ++ "> "
+    input <- getLine
+    case parseInput input of
+      Right (Place (x ** y ** pos)) => case choose $ occupied g x y of
+        Right prf => do
+          putStrLn ""
+          gameStep $ move game pos {notOccupied=prf}
+        Left _ => do
+          putStrLn "That position is occupied"
+          getInput game
+      Right Back => case decHasPrevious b of
+        Yes prf => let (_ ** _ ** _ ** b') = takeMoveBack b {hasPrev=prf} in gameStep (_ ** MkGame b')
+        No _    => do
+          putStrLn "Can't go back"
+          getInput game
+      Left err => do
+        putStrLn err
+        getInput game
+
+showResult : Result -> String
+showResult Draw = "The game was a draw."
+showResult (Win p) = show p ++ " won."
+
+partial
+main : IO ()
+main = do
+  res <- runGame $ MkGame NewBoard
+  putStrLn $ showResult res
