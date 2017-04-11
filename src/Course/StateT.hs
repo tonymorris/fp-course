@@ -299,7 +299,7 @@ distinctG x =
   runOptionalT (evalT (filtering (\a -> StateT (\s ->
     OptionalT (if a > 100
                  then
-                   log1 (fromString ("aborting > 100: " P.++ show a)) Empty
+                   log1 ("aborting > 100: " ++ show' a) Empty
                  else (if even a
-                   then log1 (fromString ("even number: " P.++ show a))
+                   then log1 ("even number: " ++ show' a)
                    else pure) (Full (a `S.notMember` s, a `S.insert` s))))) x) S.empty)
