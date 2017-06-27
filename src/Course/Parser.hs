@@ -50,6 +50,12 @@ instance Show a => Show (ParseResult a) where
   show (Result i a) =
     stringconcat ["Result >", hlist i, "< ", show a]
 
+instance Functor ParseResult where
+  _ <$> ErrorResult e =
+    ErrorResult e
+  f <$> Result i a =
+    Result i (f a)
+
 -- Function to determine is a parse result is an error.
 isErrorResult ::
   ParseResult a
@@ -82,12 +88,13 @@ valueParser a =
 
 -- | Return a parser that always fails with the given error.
 --
--- >>> isErrorResult (parse failed "abc")
+-- >>> isErrorResult (parse (failed Failed) "abc")
 -- True
 failed ::
-  Parser a
+  ParseError
+  -> Parser a
 failed =
-  P (\_ -> ErrorResult Failed)
+  P . const . ErrorResult 
 
 -- | Return a parser that succeeds with a character off the input or fails with an error if the input is empty.
 --
@@ -196,13 +203,13 @@ p >>> q =
 -- >>> parse (character ||| valueParser 'v') ""
 -- Result >< 'v'
 --
--- >>> parse (failed ||| valueParser 'v') ""
+-- >>> parse (failed Failed ||| valueParser 'v') ""
 -- Result >< 'v'
 --
 -- >>> parse (character ||| valueParser 'v') "abc"
 -- Result >bc< 'a'
 --
--- >>> parse (failed ||| valueParser 'v') "abc"
+-- >>> parse (failed Failed ||| valueParser 'v') "abc"
 -- Result >abc< 'v'
 (|||) ::
   Parser a
@@ -332,7 +339,7 @@ digit =
 natural ::
   Parser Int
 natural =
-  bindParser (\k -> case read k of Empty        -> failed
+  bindParser (\k -> case read k of Empty        -> failed Failed
                                    Full h -> valueParser h) (list digit)
 
 --

@@ -80,6 +80,9 @@ headOr =
 
 -- | The product of the elements of a list.
 --
+-- >>> product Nil
+-- 1
+--
 -- >>> product (1 :. 2 :. 3 :. Nil)
 -- 6
 --
@@ -317,8 +320,7 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce f a =
-  a :. produce f (f a)
+produce f x = x :. produce f (f x)
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?

@@ -179,7 +179,7 @@ compiler error.
 It is recommended to perform some exercises before others. The first step is to
 inspect the introduction modules.
 
-* `Course.Id`
+* `Course.ExactlyOne`
 * `Course.Validation`
 
 They contain examples of data structures and Haskell syntax. They do not contain
@@ -191,7 +191,7 @@ After this, the following progression of modules is recommended:
 * `Course.List`
 * `Course.Functor`
 * `Course.Applicative`
-* `Course.Monad` (please see [this issue](https://github.com/NICTA/course/issues/118))
+* `Course.Monad`
 * `Course.FileIO`
 * `Course.State`
 * `Course.StateT`
@@ -282,6 +282,68 @@ these points should be covered before attempting the exercises.
   * when constructors appear on the left side of `=` we are *pattern-matching*
   * when constructors appear on the right side of `=` we are *constructing*
 * type-classes
+
+### Learning the tools
+
+When this course is run in-person, some tools, particularly within Haskell, are
+covered first.
+
+* GHCi
+  * `:type`
+  * `:info`
+* values
+* type signatures
+  * `x :: T` is read as *x is of the type T*
+* functions are values
+* functions take arguments
+* functions take one argument
+* lambda expressions
+* operators (infix/prefix)
+  * identifiers starting with `isAlpha` are prefix by default, infix surrounded in backticks (\`)
+  * other identifiers are infix by default, prefix surrounded in parentheses
+* data types
+  * `data` keyword
+  * recursive data types
+* pattern matching
+* `deriving` keyword
+* type-classes
+* type parameters
+  * always lower-case 'a'..'z'
+  * aka generics, templates C++, parametric polymorphism
+* running the tests
+  * `doctest`
+
+### One-day
+
+Sometimes this course material is condensed into one-day. In these cases, the
+following exercises are recommended:
+
+* `Optional`
+  * `mapOptional`
+  * `bindOptional`
+  * `(??)`
+  * `(<+>)`
+* `List`
+  * `headOr`
+  * `product`
+  * `length`
+  * `map`
+  * `filter`
+  * `(++)`
+  * `flatMap`
+  * `reverse`
+* `Functor`
+  * `instance Functor List`
+  * `instance Functor Optional`
+  * `instance Functor ((->) t)`
+  * `instance Functor void`
+* `Applicative`
+  * `instance Applicative List`
+  * `instance Applicative Optional`
+  * `instance Applicative ((->) t)`
+  * `lift2`
+  * `sequence`
+* `FileIO`
 
 ### References
 

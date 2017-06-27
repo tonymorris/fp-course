@@ -7,7 +7,7 @@
 module Course.StateT where
 
 import Course.Core
-import Course.Id
+import Course.ExactlyOne
 import Course.Optional
 import Course.List
 import Course.Functor
@@ -79,19 +79,19 @@ instance Monad f => Monad (StateT s f) where
   f =<< StateT k =
     StateT ((=<<) (\(a, t) -> runStateT (f a) t) . k)
 
--- | A `State'` is `StateT` specialised to the `Id` functor.
+-- | A `State'` is `StateT` specialised to the `ExactlyOne` functor.
 type State' s a =
-  StateT s Id a
+  StateT s ExactlyOne a
 
 -- | Provide a constructor for `State'` values
 --
 -- >>> runStateT (state' $ runState $ put 1) 0
--- Id ((),1)
+-- ExactlyOne ((),1)
 state' ::
   (s -> (a, s))
   -> State' s a
 state' k =
-  StateT (Id . k)
+  StateT (ExactlyOne . k)
 
 -- | Provide an unwrapper for `State'` values.
 --
@@ -102,7 +102,7 @@ runState' ::
   -> s
   -> (a, s)
 runState' (StateT k) =
-  runId . k
+  runExactlyOne . k
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
 execT ::
@@ -119,7 +119,7 @@ exec' ::
   -> s
   -> s
 exec' t =
-  runId . execT t
+  runExactlyOne . execT t
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting value.
 evalT ::
@@ -136,7 +136,7 @@ eval' ::
   -> s
   -> a
 eval' t =
-  runId . evalT t
+  runExactlyOne . evalT t
 
 -- | A `StateT` where the state also distributes into the produced value.
 --
