@@ -9,8 +9,8 @@
 #### Special note 1
 
 If you have arrived here by https://github.com/tonymorris/fp-course and you are
-looking for the *exercises* (not the answers), please go to
-https://github.com/data61/fp-course
+looking for the *exercises* (not the answers, please go to
+https://github.com/data61/fp-course)
 
 #### Special note 2
 
