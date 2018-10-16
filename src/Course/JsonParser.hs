@@ -161,7 +161,7 @@ jsonNumber ::
 jsonNumber =
   P (\i -> case readFloats i of
              Empty -> ErrorResult Failed
-             Full (n, z) -> Result z n)
+             Full (n, z) -> Result z n) <* spaces
 
 -- | Parse a JSON true literal.
 --
