@@ -68,15 +68,15 @@ foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 -- >>> headOr 3 Nil
 -- 3
 --
--- prop> \x -> x `headOr` infinity == 0
+-- prop> x `headOr` infinity == 0
 --
--- prop> \x -> x `headOr` Nil == x
+-- prop> x `headOr` Nil == x
 headOr ::
   a
   -> List a
   -> a
 headOr =
-  error "todo: Course.List#headOr"
+  foldRight const
 
 -- | The product of the elements of a list.
 --
@@ -92,7 +92,7 @@ product ::
   List Int
   -> Int
 product =
-  error "todo: Course.List#product"
+  foldLeft (*) 1
 
 -- | Sum the elements of the list.
 --
@@ -102,75 +102,75 @@ product =
 -- >>> sum (1 :. 2 :. 3 :. 4 :. Nil)
 -- 10
 --
--- prop> \x -> foldLeft (-) (sum x) x == 0
+-- prop> foldLeft (-) (sum x) x == 0
 sum ::
   List Int
   -> Int
 sum =
-  error "todo: Course.List#sum"
+  foldLeft (+) 0
 
 -- | Return the length of the list.
 --
 -- >>> length (1 :. 2 :. 3 :. Nil)
 -- 3
 --
--- prop> \x -> sum (map (const 1) x) == length x
+-- prop> sum (map (const 1) x) == length x
 length ::
   List a
   -> Int
 length =
-  error "todo: Course.List#length"
+  foldLeft (const . succ) 0
 
 -- | Map the given function on each element of the list.
 --
 -- >>> map (+10) (1 :. 2 :. 3 :. Nil)
 -- [11,12,13]
 --
--- prop> \x -> headOr x (map (+1) infinity) == 1
+-- prop> headOr x (map (+1) infinity) == 1
 --
--- prop> \x -> map id x == x
+-- prop> map id x == x
 map ::
   (a -> b)
   -> List a
   -> List b
-map =
-  error "todo: Course.List#map"
+map f =
+  foldRight (\a b -> f a :. b) Nil
 
 -- | Return elements satisfying the given predicate.
 --
 -- >>> filter even (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
 -- [2,4]
 --
--- prop> \x -> headOr x (filter (const True) infinity) == 0
+-- prop> headOr x (filter (const True) infinity) == 0
 --
--- prop> \x -> filter (const True) x == x
+-- prop> filter (const True) x == x
 --
--- prop> \x -> filter (const False) x == Nil
+-- prop> filter (const False) x == Nil
 filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter =
-  error "todo: Course.List#filter"
+filter f =
+  foldRight (\a -> if f a then (a:.) else id) Nil
 
 -- | Append two lists to a new list.
 --
 -- >>> (1 :. 2 :. 3 :. Nil) ++ (4 :. 5 :. 6 :. Nil)
 -- [1,2,3,4,5,6]
 --
--- prop> \x -> headOr x (Nil ++ infinity) == 0
+-- prop> headOr x (Nil ++ infinity) == 0
 --
--- prop> \x -> headOr x (y ++ infinity) == headOr 0 y
+-- prop> headOr x (y ++ infinity) == headOr 0 y
 --
--- prop> \x -> (x ++ y) ++ z == x ++ (y ++ z)
+-- prop> (x ++ y) ++ z == x ++ (y ++ z)
 --
--- prop> \x -> x ++ Nil == x
+-- prop> x ++ Nil == x
 (++) ::
   List a
   -> List a
   -> List a
 (++) =
-  error "todo: Course.List#(++)"
+  flip (foldRight (:.))
 
 infixr 5 ++
 
@@ -179,47 +179,47 @@ infixr 5 ++
 -- >>> flatten ((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
 -- [1,2,3,4,5,6,7,8,9]
 --
--- prop> \x -> headOr x (flatten (infinity :. y :. Nil)) == 0
+-- prop> headOr x (flatten (infinity :. y :. Nil)) == 0
 --
--- prop> \x -> headOr x (flatten (y :. infinity :. Nil)) == headOr 0 y
+-- prop> headOr x (flatten (y :. infinity :. Nil)) == headOr 0 y
 --
--- prop> \x -> sum (map length x) == length (flatten x)
+-- prop> sum (map length x) == length (flatten x)
 flatten ::
   List (List a)
   -> List a
 flatten =
-  error "todo: Course.List#flatten"
+  foldRight (++) Nil
 
 -- | Map a function then flatten to a list.
 --
 -- >>> flatMap (\x -> x :. x + 1 :. x + 2 :. Nil) (1 :. 2 :. 3 :. Nil)
 -- [1,2,3,2,3,4,3,4,5]
 --
--- prop> \x -> headOr x (flatMap id (infinity :. y :. Nil)) == 0
+-- prop> headOr x (flatMap id (infinity :. y :. Nil)) == 0
 --
--- prop> \x -> headOr x (flatMap id (y :. infinity :. Nil)) == headOr 0 y
+-- prop> headOr x (flatMap id (y :. infinity :. Nil)) == headOr 0 y
 --
--- prop> \x -> flatMap id (x :: List (List Int)) == flatten x
+-- prop> flatMap id (x :: List (List Int)) == flatten x
 flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap =
-  error "todo: Course.List#flatMap"
+flatMap f =
+  flatten . map f
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
 --
--- prop> \x -> let types = x :: List (List Int) in flatten x == flattenAgain x
+-- prop> let types = x :: List (List Int) in flatten x == flattenAgain x
 flattenAgain ::
   List (List a)
   -> List a
 flattenAgain =
-  error "todo: Course.List#flattenAgain"
+  flatMap id
 
 -- | Convert a list of optional values to an optional list of values.
 --
--- * If the list contains all `Full` values,
+-- * If the list contains all `Full` values, 
 -- then return `Full` list of values.
 --
 -- * If the list contains one or more `Empty` values,
@@ -243,7 +243,7 @@ seqOptional ::
   List (Optional a)
   -> Optional (List a)
 seqOptional =
-  error "todo: Course.List#seqOptional"
+  foldRight (twiceOptional (:.)) (Full Nil)
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -265,8 +265,10 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo: Course.List#find"
+find p x =
+  case filter p x of
+    Nil -> Empty
+    h:._ -> Full h
 
 -- | Determine if the length of the given list is greater than 4.
 --
@@ -284,8 +286,10 @@ find =
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 =
-  error "todo: Course.List#lengthGT4"
+lengthGT4 (_:._:._:._:._:._) =
+  True
+lengthGT4 _ =
+  False
 
 -- | Reverse a list.
 --
@@ -295,14 +299,14 @@ lengthGT4 =
 -- >>> take 1 (reverse (reverse largeList))
 -- [1]
 --
--- prop> \x -> let types = x :: List Int in reverse x ++ reverse y == reverse (y ++ x)
+-- prop> let types = x :: List Int in reverse x ++ reverse y == reverse (y ++ x)
 --
--- prop> \x -> let types = x :: Int in reverse (x :. Nil) == x :. Nil
+-- prop> let types = x :: Int in reverse (x :. Nil) == x :. Nil
 reverse ::
   List a
   -> List a
 reverse =
-  error "todo: Course.List#reverse"
+  foldLeft (flip (:.)) Nil
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -324,14 +328,84 @@ produce f x = x :. produce f (f x)
 -- >>> notReverse Nil
 -- []
 --
--- prop> \x -> let types = x :: List Int in notReverse x ++ notReverse y == notReverse (y ++ x)
+-- prop> let types = x :: List Int in notReverse x ++ notReverse y == notReverse (y ++ x)
 --
--- prop> \x -> let types = x :: Int in notReverse (x :. Nil) == x :. Nil
+-- prop> let types = x :: Int in notReverse (x :. Nil) == x :. Nil
 notReverse ::
   List a
   -> List a
 notReverse =
-  error "todo: Is it even possible?"
+  reverse -- impossible
+-- For the sake of discussion, let's assume that,
+-- xs, ys :: List a
+-- x, y :: a
+-- We are given the following properties
+-- notReverse xs ++ notReverse ys = notReverse (ys ++ xs)  -- Eq. 1
+-- notReverse (x :. Nil) = x :. Nil                        -- Eq. 2
+--
+-- Now, to define
+--   notReverse Nil,
+-- we, first, observe that
+-- notReverse (x :. Nil) ++ notReverse Nil                 -- Eq. 3
+--   = notReverse (Nil ++ (x :. Nil))                      -- using Eq. 1
+--   = notReverse (x :. Nil)                               -- defn of (++)
+--   = x :. Nil                                            -- using Eq. 2
+--
+-- And
+-- notReverse (x :. Nil) ++ notReverse Nil                 -- Eq. 4
+--   = (x :. Nil) ++ notReverse Nil                        -- using Eq. 2
+--
+-- Since, the LHS of Eq. 3 and the LHS of Eq. 4 are the same,
+-- the RHS of Eq. 4 must be equal to the RHS of Eq. 3, i.e.,
+-- (x :. Nil) ++ notReverse Nil = x :. Nil
+--                              = (x :. Nil) ++ Nil        -- defn of (++)
+-- => notReverse Nil = Nil                                 -- Eq. 5
+--
+-- Next, we see that
+-- notReverse (x :. Nil) ++ notReverse (y :. Nil)          -- Eq. 6
+--   = notReverse ((y :. Nil) ++ (x :. Nil))               -- using Eq. 1
+--   = notReverse (y :. x :. Nil)                          -- defn of (++)
+-- And that
+-- notReverse (x :. Nil) ++ notReverse (y :. Nil)          -- Eq. 7
+--   = (x :. Nil) ++ (y :. Nil)                            -- using Eq. 2
+--   = x :. y :. Nil                                       -- defn of (++)
+--
+-- Again, since the LHS of both Eq. 6 and Eq 7. are the same,
+-- the RHS of Eq. 6 and 7 must be the same, i.e.,
+-- notReverse (y :. x :. Nil) = x :. y :. Nil              -- Eq. 8
+-- Or, simply (using variable renaming), we get
+-- notReverse (x :. y :. Nil) = y :. x :. Nil              -- Eq. 8'
+--
+-- Now, we want to prove that Eq. 1 and Eq. 2 imply 'reverse', using
+-- mathematical induction.
+--
+-- We note that
+-- notReverse Nil = Nil = reverse Nil                      -- using Eq. 5, defn of reverse
+-- notReverse (x :. Nil) = (x :. Nil) = reverse (x :. Nil) -- using Eq. 2, defn of reverse
+-- notReverse (x :. y :. Nil) = (y :. x :. Nil)            -- using Eq. 1
+--                            = reverse (x :. y :. Nil)    -- defn of reverse
+-- i.e., notReverse is equal to reverse for cases when 'List a' has 0,
+-- 1, and 2 elements.
+--
+-- Assume that it is true when 'List a' has n (n > 0) elements,
+-- notReverse (x1 :. x2 :. ... :. xn :. Nil)               -- Eq. 9
+--   = (xn :. x{n-1} :. ... :. x1 :. Nil)
+--   = reverse (x1 :. x2 :. ... :. xn :. Nil)              -- defn of reverse
+--
+-- Now,
+-- notReverse (x1 :. x2 :. ... :. xn :. x{n+1} :. Nil)
+--   = notReverse ((x1 :. x2 :. ... :. xn :. Nil) ++ (x{n+1} :. Nil))  -- defn of (++)
+--   = notReverse (x{n+1} :. Nil) ++ notReverse ((x1 :. x2 :. ... :. xn :. Nil)  -- using Eq. 1
+--   = (x{n+1} :. Nil) ++ (xn :. x{n-1} :. ... :. x1 :. Nil)  -- using Eq. 2, Eq. 9 (assumption)
+--   = (x{n+1} :. xn :. ... :. x1 :. Nil)                  -- defn of (++)
+--   = reverse (x1 :. x2 :. ... :. xn :. x{n+1} :. Nil)    -- defn of reverse
+--
+-- Since,
+--   - notReverse is equal to reverse for cases when 'List a' has 0, 1, and 2
+--     elements, and
+--   - if we assume that it is true when 'List a' has n (for some n > 0)
+--     elements, it is also true when 'List a' has n+1 elements,
+-- by mathematical induction notReverse is equal to reverse for all n in [0 ..].
 
 ---- End of list exercises
 
@@ -365,13 +439,13 @@ putStrLn =
   P.putStrLn . hlist
 
 readFile ::
-  FilePath
+  Filename
   -> IO Chars
 readFile =
   P.fmap listh . P.readFile . hlist
 
 writeFile ::
-  FilePath
+  Filename
   -> Chars
   -> IO ()
 writeFile n s =
@@ -666,8 +740,8 @@ instance IsString (List Char) where
 type Chars =
   List Char
 
-type FilePath =
-  List Char
+type Filename =
+  Chars
 
 strconcat ::
   [Chars]
@@ -689,8 +763,8 @@ show' =
   listh . show
 
 instance P.Functor List where
-  fmap f =
-    listh . P.fmap f . hlist
+  fmap =
+    M.liftM
 
 instance A.Applicative List where
   (<*>) =

@@ -2,7 +2,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module Course.Comonad where
+module Course.Comonad
+(
+  Comonad(..)
+) where
 
 import Course.Core
 import Course.ExactlyOne
@@ -29,17 +32,17 @@ instance Comonad ExactlyOne where
   copure ::
     ExactlyOne a
     -> a
-  copure =
-    error "todo: Course.Comonad copure#instance ExactlyOne"
+  copure (ExactlyOne a) =
+    a
 
 -- | Witness that all things with (<<=) and copure also have (<$>).
 --
--- >>> (+10) <$$> ExactlyOne 7
+-- >>> (+10) <$> ExactlyOne 7
 -- ExactlyOne 17
-(<$$>) ::
+(<$>) ::
   Comonad f =>
   (a -> b)
   -> f a
   -> f b
-(<$$>) =
-  error "todo: Course.Comonad#(<$>)"
+f <$> a =
+  f . copure <<= a
