@@ -49,6 +49,16 @@ instance Functor f => Functor (StateT s f) where
 --
 -- >>> runStateT ((pure 2) :: StateT Int List Int) 0
 -- [(2,0)]
+--
+-- >>> runStateT (pure (+2) <*> ((pure 2) :: StateT Int List Int)) 0
+-- [(4,0)]
+--
+-- >>> import qualified Prelude as P
+-- >>> runStateT (StateT (\s -> Full ((+2), s P.++ [1])) <*> (StateT (\s -> Full (2, s P.++ [2])))) [0]
+-- Full (4,[0,1,2])
+--
+-- >>> runStateT (StateT (\s -> ((+2), s P.++ [1]) :. ((+3), s P.++ [1]) :. Nil) <*> (StateT (\s -> (2, s P.++ [2]) :. Nil))) [0]
+-- [(4,[0,1,2]),(5,[0,1,2])]
 instance Monad f => Applicative (StateT s f) where
   pure ::
     a
@@ -105,6 +115,9 @@ runState' (StateT k) =
   runExactlyOne . k
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
+--
+-- >>> execT (StateT $ \s -> Full ((), s + 1)) 2
+-- Full 3
 execT ::
   Functor f =>
   StateT s f a
@@ -113,7 +126,10 @@ execT ::
 execT (StateT k) =
   (<$>) snd . k
 
--- | Run the `State` seeded with `s` and retrieve the resulting state.
+-- | Run the `State'` seeded with `s` and retrieve the resulting state.
+--
+-- >>> exec' (state' $ \s -> ((), s + 1)) 2
+-- 3
 exec' ::
   State' s a
   -> s
@@ -122,6 +138,9 @@ exec' t =
   runExactlyOne . execT t
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting value.
+--
+-- >>> evalT (StateT $ \s -> Full (even s, s + 1)) 2
+-- Full True
 evalT ::
   Functor f =>
   StateT s f a
@@ -130,7 +149,10 @@ evalT ::
 evalT (StateT k) =
   (<$>) fst . k
 
--- | Run the `State` seeded with `s` and retrieve the resulting value.
+-- | Run the `State'` seeded with `s` and retrieve the resulting value.
+--
+-- >>> eval' (state' $ \s -> (even s, s + 1)) 5
+-- False
 eval' ::
   State' s a
   -> s
@@ -143,7 +165,7 @@ eval' t =
 -- >>> (runStateT (getT :: StateT Int List Int) 3)
 -- [(3,3)]
 getT ::
-  Monad f =>
+  Applicative f =>
   StateT s f s
 getT =
   StateT (\s -> pure (s, s))
@@ -156,7 +178,7 @@ getT =
 -- >>> runStateT (putT 2 :: StateT Int List ()) 0
 -- [((),2)]
 putT ::
-  Monad f =>
+  Applicative f =>
   s
   -> StateT s f ()
 putT =
@@ -165,10 +187,10 @@ putT =
 -- | Remove all duplicate elements in a `List`.
 --
 -- /Tip:/ Use `filtering` and `State'` with a @Data.Set#Set@.
---w
--- prop> distinct' xs == distinct' (flatMap (\x -> x :. x :. Nil) xs)
+--
+-- prop> \xs -> distinct' xs == distinct' (flatMap (\x -> x :. x :. Nil) xs)
 distinct' ::
-  Ord a =>
+  (Ord a, Num a) =>
   List a
   -> List a
 distinct' x =
@@ -205,18 +227,48 @@ data OptionalT f a =
 -- >>> runOptionalT $ (+1) <$> OptionalT (Full 1 :. Empty :. Nil)
 -- [Full 2,Empty]
 instance Functor f => Functor (OptionalT f) where
+  (<$>) ::
+    (a -> b)
+    -> OptionalT f a
+    -> OptionalT f b
   f <$> OptionalT x =
     OptionalT ((<$>) f <$> x)
 
--- | Implement the `Applicative` instance for `OptionalT f` given a Applicative f.
+-- | Implement the `Applicative` instance for `OptionalT f` given a Monad f.
+--
+-- /Tip:/ Use `onFull` to help implement (<*>).
+--
+-- >>> runOptionalT $ OptionalT Nil <*> OptionalT (Full 1 :. Full 2 :. Nil)
+-- []
+--
+-- >>> runOptionalT $ OptionalT (Full (+1) :. Full (+2) :. Nil) <*> OptionalT Nil
+-- []
+--
+-- >>> runOptionalT $ OptionalT (Empty :. Nil) <*> OptionalT (Empty :. Nil)
+-- [Empty]
+--
+-- >>> runOptionalT $ OptionalT (Full (+1) :. Empty :. Nil) <*> OptionalT (Empty :. Nil)
+-- [Empty,Empty]
+--
+-- >>> runOptionalT $ OptionalT (Empty :. Nil) <*> OptionalT (Full 1 :. Full 2 :. Nil)
+-- [Empty]
+--
+-- >>> runOptionalT $ OptionalT (Full (+1) :. Empty :. Nil) <*> OptionalT (Full 1 :. Full 2 :. Nil)
+-- [Full 2,Full 3,Empty]
 --
 -- >>> runOptionalT $ OptionalT (Full (+1) :. Full (+2) :. Nil) <*> OptionalT (Full 1 :. Empty :. Nil)
 -- [Full 2,Empty,Full 3,Empty]
-
--- | Implement the `Applicative` instance for `OptionalT f` given a Applicative f.
-instance Applicative f => Applicative (OptionalT f) where
+instance Monad f => Applicative (OptionalT f) where
+  pure ::
+    a
+    -> OptionalT f a
   pure =
     OptionalT . pure . pure
+
+  (<*>) ::
+    OptionalT f (a -> b)
+    -> OptionalT f a
+    -> OptionalT f b
   OptionalT f <*> OptionalT a =
     OptionalT (lift2 (<*>) f a)
 
@@ -225,6 +277,10 @@ instance Applicative f => Applicative (OptionalT f) where
 -- >>> runOptionalT $ (\a -> OptionalT (Full (a+1) :. Full (a+2) :. Nil)) =<< OptionalT (Full 1 :. Empty :. Nil)
 -- [Full 2,Full 3,Empty]
 instance Monad f => Monad (OptionalT f) where
+  (=<<) ::
+    (a -> OptionalT f b)
+    -> OptionalT f a
+    -> OptionalT f b
   f =<< OptionalT x =
     OptionalT ((\o -> case o of
                         Empty -> pure Empty
@@ -240,6 +296,10 @@ data Logger l a =
 -- >>> (+3) <$> Logger (listh [1,2]) 3
 -- Logger [1,2] 6
 instance Functor (Logger l) where
+  (<$>) ::
+    (a -> b)
+    -> Logger l a
+    -> Logger l b
   f <$> Logger l a =
     Logger l (f a)
 
@@ -251,8 +311,16 @@ instance Functor (Logger l) where
 -- >>> Logger (listh [1,2]) (+7) <*> Logger (listh [3,4]) 3
 -- Logger [1,2,3,4] 10
 instance Applicative (Logger l) where
+  pure ::
+    a
+    -> Logger l a
   pure =
     Logger Nil
+
+  (<*>) ::
+    Logger l (a -> b)
+    -> Logger l a
+    -> Logger l b
   Logger l f <*> Logger m a =
     Logger (l ++ m) (f a)
 
@@ -262,6 +330,10 @@ instance Applicative (Logger l) where
 -- >>> (\a -> Logger (listh [4,5]) (a+3)) =<< Logger (listh [1,2]) 3
 -- Logger [1,2,4,5] 6
 instance Monad (Logger l) where
+  (=<<) ::
+    (a -> Logger l b)
+    -> Logger l a
+    -> Logger l b
   f =<< Logger l a =
     let Logger l' b = f a
     in Logger (l ++ l') b
@@ -303,3 +375,15 @@ distinctG x =
                  else (if even a
                    then log1 (fromString ("even number: " P.++ show a))
                    else pure) (Full (a `S.notMember` s, a `S.insert` s))))) x) S.empty)
+
+onFull ::
+  Applicative f =>
+  (t -> f (Optional a))
+  -> Optional t
+  -> f (Optional a)
+onFull g o =
+  case o of
+    Empty ->
+      pure Empty
+    Full a ->
+      g a

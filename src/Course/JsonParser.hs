@@ -79,7 +79,7 @@ toSpecialCharacter c =
               ('\\', Backslash) :.
               Nil
   in snd <$> find ((==) c . fst) table
-  
+
 -- | Parse a JSON string. Handle double-quotes, special characters, hexadecimal characters. See http://json.org for the full list of control characters in JSON.
 --
 -- /Tip:/ Use `hex`, `fromSpecialCharacter`, `between`, `is`, `charTok`, `toSpecialCharacter`.
@@ -110,13 +110,13 @@ toSpecialCharacter c =
 jsonString ::
   Parser Chars
 jsonString =
-  let str = 
+  let str =
         do c1 <- character
            if c1 == '\\'
              then
                do c2 <- character
                   if c2 == 'u'
-                    then 
+                    then
                       hex
                     else
                       case toSpecialCharacter c2 of
@@ -160,7 +160,7 @@ jsonNumber ::
   Parser Rational
 jsonNumber =
   P (\i -> case readFloats i of
-             Empty -> ErrorResult Failed
+             Empty -> error "todo: jsonNumber failed case"
              Full (n, z) -> Result z n)
 
 -- | Parse a JSON true literal.
@@ -257,10 +257,10 @@ jsonObject =
 -- Result >< JsonTrue
 --
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : [7, false] }"
--- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational False (7 % 1),JsonFalse])]
+-- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational (7 % 1),JsonFalse])]
 --
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : [7, false] , \"key3\" : { \"key4\" : null } }"
--- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational False (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
+-- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
 jsonValue ::
   Parser JsonValue
 jsonValue =
@@ -271,13 +271,13 @@ jsonValue =
    ||| JsonArray <$> jsonArray
    ||| JsonString <$> jsonString
    ||| JsonObject <$> jsonObject
-   ||| JsonRational False <$> jsonNumber)
+   ||| JsonRational <$> jsonNumber)
 
 -- | Read a file into a JSON value.
 --
 -- /Tip:/ Use @System.IO#readFile@ and `jsonValue`.
 readJsonValue ::
-  Filename
+  FilePath
   -> IO (ParseResult JsonValue)
 readJsonValue p =
   do c <- readFile p
