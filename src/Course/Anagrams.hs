@@ -30,7 +30,7 @@ Functions that might help
 -- that appear in the given dictionary file.
 anagrams ::
   Chars
-  -> Filename
+  -> FilePath
   -> IO (List Chars)
 anagrams name =
   (<$>) (intersectBy equalIgnoringCase (permutations name) . lines) . readFile

@@ -3,24 +3,11 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Course.Applicative(
-  Applicative(..)
-, lift2
-, lift3
-, lift4
-, (*>)
-, (<*)
-, sequence
-, replicateA
-, filtering
-, return
-, fail
-, (>>)
-) where
+module Course.Applicative where
 
 import Course.Core
 import Course.ExactlyOne
-import Course.Functor hiding ((<$>))
+import Course.Functor
 import Course.List
 import Course.Optional
 import qualified Prelude as P(fmap, return, (>>=))
@@ -31,11 +18,15 @@ import qualified Prelude as P(fmap, return, (>>=))
 -- * The law of associative composition
 --   `∀a b c. ((.) <$> a <*> b <*> c) ≅ (a <*> (b <*> c))`
 --
--- * The law of left identity
+-- * The law of identity
 --   `∀x. pure id <*> x ≅ x`
 --
--- * The law of right identity
---   `∀x. x <*> pure id ≅ x`
+-- * The law of homomorphism
+--   `∀f x. pure f <*> pure x ≅ pure (f x)`
+--
+-- * The law of composition
+--   `∀u v w. pure (.) <*> u <*> v <*> w ≅ u <*> (v <*> w)`
+
 class Functor f => Applicative f where
   pure ::
     a -> f a
@@ -46,27 +37,9 @@ class Functor f => Applicative f where
 
 infixl 4 <*>
 
--- | Witness that all things with (<*>) and pure also have (<$>).
---
--- >>> (+1) <$> (ExactlyOne 2)
--- ExactlyOne 3
---
--- >>> (+1) <$> Nil
--- []
---
--- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
--- [2,3,4]
-(<$>) ::
-  Applicative f =>
-  (a -> b)
-  -> f a
-  -> f b
-(<$>) =
-  (<*>) . pure
-
 -- | Insert into ExactlyOne.
 --
--- prop> pure x == ExactlyOne x
+-- prop> \x -> pure x == ExactlyOne x
 --
 -- >>> ExactlyOne (+10) <*> ExactlyOne 8
 -- ExactlyOne 18
@@ -85,7 +58,7 @@ instance Applicative ExactlyOne where
 
 -- | Insert into a List.
 --
--- prop> pure x == x :. Nil
+-- prop> \x -> pure x == x :. Nil
 --
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
 -- [2,3,4,2,4,6]
@@ -104,7 +77,7 @@ instance Applicative List where
 
 -- | Insert into an Optional.
 --
--- prop> pure x == Full x
+-- prop> \x -> pure x == Full x
 --
 -- >>> Full (+8) <*> Full 7
 -- Full 15
@@ -144,7 +117,7 @@ instance Applicative Optional where
 -- >>> ((*) <*> (+2)) 3
 -- 15
 --
--- prop> pure x y == x
+-- prop> \x y -> pure x y == x
 instance Applicative ((->) t) where
   pure ::
     a
@@ -187,6 +160,7 @@ lift2 f a b =
   f <$> a <*> b
 
 -- | Apply a ternary function in the environment.
+-- /can be written using `lift2` and `(<*>)`./
 --
 -- >>> lift3 (\a b c -> a + b + c) (ExactlyOne 7) (ExactlyOne 8) (ExactlyOne 9)
 -- ExactlyOne 24
@@ -219,6 +193,7 @@ lift3 f a b c =
   lift2 f a b <*> c
 
 -- | Apply a quaternary function in the environment.
+-- /can be written using `lift3` and `(<*>)`./
 --
 -- >>> lift4 (\a b c d -> a + b + c + d) (ExactlyOne 7) (ExactlyOne 8) (ExactlyOne 9) (ExactlyOne 10)
 -- ExactlyOne 34
@@ -250,6 +225,30 @@ lift4 ::
   -> f e
 lift4 f a b c d =
   lift3 f a b c <*> d
+-- | Apply a nullary function in the environment.
+lift0 ::
+  Applicative f =>
+  a
+  -> f a
+lift0 = pure
+
+-- | Apply a unary function in the environment.
+-- /can be written using `lift0` and `(<*>)`./
+--
+-- >>> lift1 (+1) (ExactlyOne 2)
+-- ExactlyOne 3
+--
+-- >>> lift1 (+1) Nil
+-- []
+--
+-- >>> lift1 (+1) (1 :. 2 :. 3 :. Nil)
+-- [2,3,4]
+lift1 ::
+  Applicative f =>
+  (a -> b)
+  -> f a
+  -> f b
+lift1 = (<$>)
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
@@ -266,9 +265,9 @@ lift4 f a b c d =
 -- >>> Full 7 *> Full 8
 -- Full 8
 --
--- prop> (a :. b :. c :. Nil) *> (x :. y :. z :. Nil) == (x :. y :. z :. x :. y :. z :. x :. y :. z :. Nil)
+-- prop> \a b c x y z -> (a :. b :. c :. Nil) *> (x :. y :. z :. Nil) == (x :. y :. z :. x :. y :. z :. x :. y :. z :. Nil)
 --
--- prop> Full x *> Full y == Full y
+-- prop> \x y -> Full x *> Full y == Full y
 (*>) ::
   Applicative f =>
   f a
@@ -292,9 +291,9 @@ lift4 f a b c d =
 -- >>> Full 7 <* Full 8
 -- Full 7
 --
--- prop> (x :. y :. z :. Nil) <* (a :. b :. c :. Nil) == (x :. x :. x :. y :. y :. y :. z :. z :. z :. Nil)
+-- prop> \x y z a b c -> (x :. y :. z :. Nil) <* (a :. b :. c :. Nil) == (x :. x :. x :. y :. y :. y :. z :. z :. z :. Nil)
 --
--- prop> Full x <* Full y == Full x
+-- prop> \x y -> Full x <* Full y == Full x
 (<*) ::
   Applicative f =>
   f b
@@ -327,6 +326,8 @@ sequence =
   foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
+--
+-- /Tip:/ Use `Course.List#replicate`.
 --
 -- >>> replicateA 4 (ExactlyOne "hi")
 -- ExactlyOne ["hi","hi","hi","hi"]

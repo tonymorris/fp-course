@@ -31,6 +31,45 @@ newtype State s a =
       -> (a, s)
   }
 
+-- | Run the `State` seeded with `s` and retrieve the resulting state.
+--
+-- prop> \(Fun _ f) s -> exec (State f) s == snd (runState (State f) s)
+exec ::
+  State s a
+  -> s
+  -> s
+exec (State k) =
+  snd . k
+
+-- | Run the `State` seeded with `s` and retrieve the resulting value.
+--
+-- prop> \(Fun _ f) s -> eval (State f) s == fst (runState (State f) s)
+eval ::
+  State s a
+  -> s
+  -> a
+eval (State k) =
+  fst . k
+
+-- | A `State` where the state also distributes into the produced value.
+--
+-- >>> runState get 0
+-- (0,0)
+get ::
+  State s s
+get =
+  State (\s -> (s, s))
+
+-- | A `State` where the resulting state is seeded with the given value.
+--
+-- >>> runState (put 1) 0
+-- ((),1)
+put ::
+  s
+  -> State s ()
+put =
+  State . const . (,) ()
+
 -- | Implement the `Functor` instance for `State s`.
 --
 -- >>> runState ((+1) <$> State (\s -> (9, s * 2))) 3
@@ -63,7 +102,7 @@ instance Applicative (State s) where
   (<*>) ::
     State s (a -> b)
     -> State s a
-    -> State s b 
+    -> State s b
   State f <*> State a =
     State (\s -> let (g, t) = f s
                      (z, u) = a t
@@ -83,45 +122,6 @@ instance Monad (State s) where
     -> State s b
   f =<< State k =
     State (\s -> let (a, t) = k s in runState (f a) t)
-
--- | Run the `State` seeded with `s` and retrieve the resulting state.
---
--- prop> \(Fun _ f) -> exec (State f) s == snd (runState (State f) s)
-exec ::
-  State s a
-  -> s
-  -> s
-exec (State k) =
-  snd . k
-
--- | Run the `State` seeded with `s` and retrieve the resulting value.
---
--- prop> \(Fun _ f) -> eval (State f) s == fst (runState (State f) s)
-eval ::
-  State s a
-  -> s
-  -> a
-eval (State k) =
-  fst . k
-
--- | A `State` where the state also distributes into the produced value.
---
--- >>> runState get 0
--- (0,0)
-get ::
-  State s s
-get =
-  State (\s -> (s, s))
-
--- | A `State` where the resulting state is seeded with the given value.
---
--- >>> runState (put 1) 0
--- ((),1)
-put ::
-  s
-  -> State s ()
-put =
-  State . const . (,) ()
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -152,8 +152,8 @@ findM p (h :. t) =
 --
 -- /Tip:/ Use `findM` and `State` with a @Data.Set#Set@.
 --
--- prop> case firstRepeat xs of Empty -> let xs' = hlist xs in nub xs' == xs'; Full x -> length (filter (== x) xs) > 1
--- prop> case firstRepeat xs of Empty -> True; Full x -> let (l, (rx :. rs)) = span (/= x) xs in let (l2, r2) = span (/= x) rs in let l3 = hlist (l ++ (rx :. Nil) ++ l2) in nub l3 == l3
+-- prop> \xs -> case firstRepeat xs of Empty -> let xs' = hlist xs in nub xs' == xs'; Full x -> length (filter (== x) xs) > 1
+-- prop> \xs -> case firstRepeat xs of Empty -> True; Full x -> let (l, (rx :. rs)) = span (/= x) xs in let (l2, r2) = span (/= x) rs in let l3 = hlist (l ++ (rx :. Nil) ++ l2) in nub l3 == l3
 firstRepeat ::
   Ord a =>
   List a
@@ -164,24 +164,24 @@ firstRepeat =
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
 --
--- prop> firstRepeat (distinct xs) == Empty
+-- prop> \xs -> firstRepeat (distinct xs) == Empty
 --
--- prop> distinct xs == distinct (flatMap (\x -> x :. x :. Nil) xs)
+-- prop> \xs -> distinct xs == distinct (flatMap (\x -> x :. x :. Nil) xs)
 distinct ::
   Ord a =>
   List a
   -> List a
 distinct =
-  listWithState filtering S.notMember 
+  listWithState filtering S.notMember
 
-listWithState :: 
+listWithState ::
   Ord a1 =>
-  ((a1 -> State (S.Set a1) a2) 
-  -> t 
+  ((a1 -> State (S.Set a1) a2)
+  -> t
   -> State (S.Set a3) a)
-  -> (a1 -> S.Set a1 -> a2) 
-  -> t 
-  -> a 
+  -> (a1 -> S.Set a1 -> a2)
+  -> t
+  -> a
 listWithState f m x =
   eval (f (State . lift2 (lift2 (,)) m S.insert) x) S.empty
 
@@ -214,6 +214,6 @@ isHappy =
     firstRepeat .
     produce (toInteger .
              sum .
-             map (join (*) . 
+             map (join (*) .
                   digitToInt) .
              show')

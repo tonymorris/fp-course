@@ -66,7 +66,7 @@ tok p =
 --
 -- >>> isErrorResult (parse (charTok 'a') "dabc")
 -- True
--- 
+--
 -- /Tip:/ Use `tok` and `is`.
 charTok ::
   Char
@@ -81,7 +81,7 @@ charTok =
 --
 -- >>> isErrorResult( parse commaTok "1,23")
 -- True
--- 
+--
 -- /Tip:/ Use `charTok`.
 commaTok ::
   Parser Char
@@ -120,7 +120,7 @@ string ::
 string =
   traverse is
 
--- | Write a function that parsers the given string, followed by 0 or more spaces.
+-- | Write a function that parses the given string, followed by 0 or more spaces.
 --
 -- /Tip:/ Use `tok` and `string`.
 --
@@ -247,7 +247,7 @@ betweenCharTok a b =
 
 -- | Write a function that parses 4 hex digits and return the character value.
 --
--- /Tip:/ Use `readHex`, `isHexDigit`, `replicateA`, `satisfy` and the monad instance.
+-- /Tip:/ Use `readHex`, `isHexDigit`, `replicateA`, `satisfy`, `chr` and the monad instance.
 --
 -- >>> parse hex "0010"
 -- Result >< '\DLE'
@@ -352,7 +352,7 @@ eof ::
 eof =
   P (\s -> case s of
              Nil -> Result Nil ()
-             x -> ErrorResult (ExpectedEof x))
+             x -> ExpectedEof x)
 
 -- | Write a parser that produces a character that satisfies all of the given predicates.
 --

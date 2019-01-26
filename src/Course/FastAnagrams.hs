@@ -12,7 +12,7 @@ import qualified Data.Set as S
 -- that appear in the given dictionary file.
 fastAnagrams ::
   Chars
-  -> Filename
+  -> FilePath
   -> IO (List Chars)
 fastAnagrams name f =
   (flip (filter . flip S.member) (permutations name) . S.fromList . hlist . lines) <$> readFile f
@@ -23,9 +23,7 @@ newtype NoCaseString =
   }
 
 instance Eq NoCaseString where
-  (==) =
-    (==) `on` (<$>) toLower . ncString
+  (==) = (==) `on` map toLower . ncString
 
 instance Show NoCaseString where
-  show =
-    show . ncString
+  show = show . ncString

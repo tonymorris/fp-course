@@ -77,6 +77,31 @@ instance Functor MaybeListZipper where
   _ <$> IsNotZ =
     IsNotZ
 
+-- | Convert the given zipper back to a list.
+--
+-- >>> toList <$> toOptional (fromList Nil)
+-- Empty
+--
+-- >>> toList (ListZipper Nil 1 (2:.3:.4:.Nil))
+-- [1,2,3,4]
+--
+-- >>> toList (ListZipper (3:.2:.1:.Nil) 4 (5:.6:.7:.Nil))
+-- [1,2,3,4,5,6,7]
+toList ::
+  ListZipper a
+  -> List a
+toList (ListZipper l x r) =
+  reverse l ++ x:.r
+
+-- | Convert the given (maybe) zipper back to a list.
+toListZ ::
+  MaybeListZipper a
+  -> List a
+toListZ IsNotZ =
+  Nil
+toListZ (IsZ z) =
+  toList z
+
 -- | Create a `MaybeListZipper` positioning the focus at the head.
 --
 -- ->>> fromList (1 :. 2 :. 3 :. Nil)
@@ -85,7 +110,7 @@ instance Functor MaybeListZipper where
 -- >>> fromList Nil
 -- ><
 --
--- prop> xs == toListZ (fromList xs)
+-- prop> \xs -> xs == toListZ (fromList xs)
 fromList ::
   List a
   -> MaybeListZipper a
@@ -96,9 +121,9 @@ fromList (h:.t) =
 
 -- | Retrieve the `ListZipper` from the `MaybeListZipper` if there is one.
 --
--- prop> isEmpty xs == (toOptional (fromList xs) == Empty)
+-- prop> \xs -> isEmpty xs == (toOptional (fromList xs) == Empty)
 --
--- prop> toOptional (fromOptional z) == z
+-- prop> \z -> toOptional (fromOptional z) == z
 toOptional ::
   MaybeListZipper a
   -> Optional (ListZipper a)
@@ -152,31 +177,6 @@ asMaybeZipper f (IsZ z) =
   -> MaybeListZipper a
 (-<<) =
   asMaybeZipper
-
--- | Convert the given zipper back to a list.
---
--- >>> toList <$> toOptional (fromList Nil)
--- Empty
---
--- >>> toList (ListZipper Nil 1 (2:.3:.4:.Nil))
--- [1,2,3,4]
---
--- >>> toList (ListZipper (3:.2:.1:.Nil) 4 (5:.6:.7:.Nil))
--- [1,2,3,4,5,6,7]
-toList ::
-  ListZipper a
-  -> List a
-toList (ListZipper l x r) =
-  reverse l ++ x:.r
-
--- | Convert the given (maybe) zipper back to a list.
-toListZ ::
-  MaybeListZipper a
-  -> List a
-toListZ IsNotZ =
-  Nil
-toListZ (IsZ z) =
-  toList z
 
 -- | Update the focus of the zipper with the given function on the current focus.
 --
@@ -243,12 +243,12 @@ hasRight ::
 hasRight (ListZipper _ _ r) =
   not (isEmpty r)
 
--- | Seek to the left for a location matching a predicate, starting from the
--- current one.
+-- | Seek to the left for a location matching a predicate, excluding the
+-- focus.
 --
 -- /Tip:/ Use `break`
 --
--- prop> findLeft (const p) -<< fromList xs == IsNotZ
+-- prop> \xs p -> findLeft (const p) -<< fromList xs == IsNotZ
 --
 -- >>> findLeft (== 1) (zipper [2, 1] 3 [4, 5])
 -- [] >1< [2,3,4,5]
@@ -261,6 +261,9 @@ hasRight (ListZipper _ _ r) =
 --
 -- >>> findLeft (== 1) (zipper [1, 2, 1] 3 [4, 5])
 -- [2,1] >1< [3,4,5]
+--
+-- >>> findLeft (== 1) (zipper [3, 4, 1, 5] 9 [2, 7])
+-- [5] >1< [4,3,9,2,7]
 findLeft ::
   (a -> Bool)
   -> ListZipper a
@@ -271,13 +274,13 @@ findLeft p (ListZipper ls x rs) =
       IsNotZ
     (rs', x':.ls') ->
       IsZ (ListZipper ls' x' (reverse rs' ++ x :. rs))
-    
--- | Seek to the right for a location matching a predicate, starting from the
--- current one.
+
+-- | Seek to the right for a location matching a predicate, excluding the
+-- focus.
 --
 -- /Tip:/ Use `break`
 --
--- prop> findRight (const False) -<< fromList xs == IsNotZ
+-- prop> \xs -> findRight (const False) -<< fromList xs == IsNotZ
 --
 -- >>> findRight (== 5) (zipper [2, 1] 3 [4, 5])
 -- [4,3,2,1] >5< []
@@ -401,7 +404,7 @@ swapRight (ListZipper l x (h:.t)) =
 -- >>> dropLefts (zipper [] 1 [2,3,4])
 -- [] >1< [2,3,4]
 --
--- prop> dropLefts (zipper l x r) == zipper [] x r
+-- prop> \l x r -> dropLefts (zipper l x r) == zipper [] x r
 dropLefts ::
   ListZipper a
   -> ListZipper a
@@ -416,7 +419,7 @@ dropLefts (ListZipper _ x r) =
 -- >>> dropRights (zipper [3,2,1] 4 [])
 -- [3,2,1] >4< []
 --
--- prop> dropRights (zipper l x r) == zipper l x []
+-- prop> \l x r -> dropRights (zipper l x r) == zipper l x []
 dropRights ::
   ListZipper a
   -> ListZipper a
@@ -555,7 +558,7 @@ nth i z =
 -- >>> index (zipper [3,2,1] 4 [5,6,7])
 -- 3
 --
--- prop> optional True (\z' -> index z' == i) (toOptional (nth i z))
+-- prop> \i z -> optional True (\z' -> index z' == i) (toOptional (nth i z))
 index ::
   ListZipper a
   -> Int
@@ -567,9 +570,9 @@ index (ListZipper l _ _) =
 -- >>> end (zipper [3,2,1] 4 [5,6,7])
 -- [6,5,4,3,2,1] >7< []
 --
--- prop> toList lz == toList (end lz)
+-- prop> \lz -> toList lz == toList (end lz)
 --
--- prop> rights (end lz) == Nil
+-- prop> \lz -> rights (end lz) == Nil
 end ::
   ListZipper a
   -> ListZipper a
@@ -583,9 +586,9 @@ end z =
 -- >>> start (zipper [3,2,1] 4 [5,6,7])
 -- [] >1< [2,3,4,5,6,7]
 --
--- prop> toList lz == toList (start lz)
+-- prop> \lz -> toList lz == toList (start lz)
 --
--- prop> lefts (start lz) == Nil
+-- prop> \lz -> lefts (start lz) == Nil
 start ::
   ListZipper a
   -> ListZipper a
@@ -632,7 +635,7 @@ deletePullRight (ListZipper l _ (h:.t)) =
 -- >>> insertPushLeft 15 (zipper [] 1 [2,3,4])
 -- [1] >15< [2,3,4]
 --
--- prop> optional False (==z) (toOptional (deletePullLeft (insertPushLeft i z)))
+-- prop> \i z -> optional False (==z) (toOptional (deletePullLeft (insertPushLeft i z)))
 insertPushLeft ::
   a
   -> ListZipper a
@@ -648,7 +651,7 @@ insertPushLeft a (ListZipper l x r) =
 -- >>> insertPushRight 15 (zipper [3,2,1] 4 [])
 -- [3,2,1] >15< [4]
 --
--- prop> optional False (==z) (toOptional (deletePullRight (insertPushRight i z)))
+-- prop> \i z -> optional False (==z) (toOptional (deletePullRight (insertPushRight i z)))
 insertPushRight ::
   a
   -> ListZipper a
@@ -660,9 +663,9 @@ insertPushRight a (ListZipper l x r) =
 -- `pure` produces an infinite list zipper (to both left and right).
 -- (<*>) zips functions with values by function application.
 --
--- prop> all . (==) <*> take n . lefts . pure
+-- prop> \n -> all . (==) <*> take n . lefts . pure
 --
--- prop> all . (==) <*> take n . rights . pure
+-- prop> \n -> all . (==) <*> take n . rights . pure
 --
 -- >>> zipper [(+2), (+10)] (*2) [(*3), (4*), (5+)] <*> zipper [3,2,1] 4 [5,6,7]
 -- [5,12] >8< [15,24,12]
@@ -679,9 +682,9 @@ instance Applicative ListZipper where
 -- /Tip:/ Use @pure@ for `ListZipper`.
 -- /Tip:/ Use `<*>` for `ListZipper`.
 --
--- prop> let is (IsZ z) = z in all . (==) <*> take n . lefts . is . pure
+-- prop> \z n -> let is (IsZ z) = z in all . (==) <*> take n . lefts . is . pure
 --
--- prop> let is (IsZ z) = z in all . (==) <*> take n . rights . is . pure
+-- prop> \z n -> let is (IsZ z) = z in all . (==) <*> take n . rights . is . pure
 --
 -- >>> IsZ (zipper [(+2), (+10)] (*2) [(*3), (4*), (5+)]) <*> IsZ (zipper [3,2,1] 4 [5,6,7])
 -- [5,12] >8< [15,24,12]

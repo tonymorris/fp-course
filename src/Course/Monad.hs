@@ -3,14 +3,9 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Course.Monad(
-  Monad(..)
-, join
-, (>>=)  
-, (<=<)
-) where
+module Course.Monad where
 
-import Course.Applicative hiding ((<*>))
+import Course.Applicative
 import Course.Core
 import Course.ExactlyOne
 import Course.Functor
@@ -31,47 +26,6 @@ class Applicative f => Monad f where
     -> f b
 
 infixr 1 =<<
-
--- | Witness that all things with (=<<) and (<$>) also have (<*>).
---
--- >>> ExactlyOne (+10) <*> ExactlyOne 8
--- ExactlyOne 18
---
--- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
--- [2,3,4,2,4,6]
---
--- >>> Full (+8) <*> Full 7
--- Full 15
---
--- >>> Empty <*> Full 7
--- Empty
---
--- >>> Full (+8) <*> Empty
--- Empty
---
--- >>> ((+) <*> (+10)) 3
--- 16
---
--- >>> ((+) <*> (+5)) 3
--- 11
---
--- >>> ((+) <*> (+5)) 1
--- 7
---
--- >>> ((*) <*> (+10)) 3
--- 39
---
--- >>> ((*) <*> (+2)) 3
--- 15
-(<*>) ::
-  Monad f =>
-  f (a -> b)
-  -> f a
-  -> f b
-f <*> a =
-  (\f' -> return . f' =<< a) =<< f
-
-infixl 4 <*>
 
 -- | Binds a function on the ExactlyOne monad.
 --
@@ -118,8 +72,49 @@ instance Monad ((->) t) where
     (a -> ((->) t b))
     -> ((->) t a)
     -> ((->) t b)
-  f =<< g =
-    \t -> f (g t) t
+  atb =<< ta =
+    \t -> atb (ta t) $ t
+
+-- | Witness that all things with (=<<) and (<$>) also have (<*>).
+--
+-- >>> ExactlyOne (+10) <**> ExactlyOne 8
+-- ExactlyOne 18
+--
+-- >>> (+1) :. (*2) :. Nil <**> 1 :. 2 :. 3 :. Nil
+-- [2,3,4,2,4,6]
+--
+-- >>> Full (+8) <**> Full 7
+-- Full 15
+--
+-- >>> Empty <**> Full 7
+-- Empty
+--
+-- >>> Full (+8) <**> Empty
+-- Empty
+--
+-- >>> ((+) <**> (+10)) 3
+-- 16
+--
+-- >>> ((+) <**> (+5)) 3
+-- 11
+--
+-- >>> ((+) <**> (+5)) 1
+-- 7
+--
+-- >>> ((*) <**> (+10)) 3
+-- 39
+--
+-- >>> ((*) <**> (+2)) 3
+-- 15
+(<**>) ::
+  Monad f =>
+  f (a -> b)
+  -> f a
+  -> f b
+(<**>) =
+  (<*>)
+
+infixl 4 <**>
 
 -- | Flattens a combined structure to a single structure.
 --
