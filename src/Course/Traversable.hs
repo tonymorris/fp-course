@@ -45,8 +45,8 @@ instance Traversable ExactlyOne where
     (a -> f b)
     -> ExactlyOne a
     -> f (ExactlyOne b)
-  traverse =
-    error "todo: Course.Traversable traverse#instance ExactlyOne"
+  traverse f (ExactlyOne a) =
+    ExactlyOne <$> f a
 
 instance Traversable Optional where
   traverse ::
@@ -54,8 +54,10 @@ instance Traversable Optional where
     (a -> f b)
     -> Optional a
     -> f (Optional b)
-  traverse =
-    error "todo: Course.Traversable traverse#instance Optional"
+  traverse _ Empty =
+    pure Empty
+  traverse f (Full a) =
+    Full <$> f a
 
 -- | Sequences a traversable value of structures to a structure of a traversable value.
 --
@@ -72,13 +74,13 @@ sequenceA ::
   t (f a)
   -> f (t a)
 sequenceA =
-  error "todo: Course.Traversable#sequenceA"
+  traverse id
 
 instance (Traversable f, Traversable g) =>
   Traversable (Compose f g) where
 -- Implement the traverse function for a Traversable instance for Compose
-  traverse =
-    error "todo: Course.Traversable traverse#instance (Compose f g)"
+  traverse f (Compose x) =
+    Compose <$> traverse (traverse f) x
 
 -- | The `Product` data type contains one value from each of the two type constructors.
 data Product f g a =
@@ -87,14 +89,14 @@ data Product f g a =
 instance (Functor f, Functor g) =>
   Functor (Product f g) where
 -- Implement the (<$>) function for a Functor instance for Product
-  (<$>) =
-    error "todo: Course.Traversable (<$>)#instance (Product f g)"
+  f <$> Product a b =
+    Product (f <$> a) (f <$> b)
 
 instance (Traversable f, Traversable g) =>
   Traversable (Product f g) where
 -- Implement the traverse function for a Traversable instance for Product
-  traverse =
-    error "todo: Course.Traversable traverse#instance (Product f g)"
+  traverse f (Product a b) =
+    Product <$> traverse f a <*> traverse f b
 
 -- | The `Coproduct` data type contains one value from either of the two type constructors.
 data Coproduct f g a =
@@ -104,11 +106,15 @@ data Coproduct f g a =
 instance (Functor f, Functor g) =>
   Functor (Coproduct f g) where
 -- Implement the (<$>) function for a Functor instance for Coproduct
-  (<$>) =
-    error "todo: Course.Traversable (<$>)#instance (Coproduct f g)"
+  f <$> InL a =
+    InL (f <$> a)
+  f <$> InR b =
+    InR (f <$> b)
 
 instance (Traversable f, Traversable g) =>
   Traversable (Coproduct f g) where
 -- Implement the traverse function for a Traversable instance for Coproduct
-  traverse =
-    error "todo: Course.Traversable traverse#instance (Coproduct f g)"
+  traverse f (InL a) =
+    InL <$> traverse f a
+  traverse f (InR b) =
+    InR <$> traverse f b
