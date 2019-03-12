@@ -3,39 +3,30 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Course.Applicative(
-  Applicative(..)
-, lift2
-, lift3
-, lift4
-, (*>)
-, (<*)
-, sequence
-, replicateA
-, filtering
-, return
-, fail
-, (>>)
-) where
+module Course.Applicative where
 
 import Course.Core
 import Course.ExactlyOne
-import Course.Functor hiding ((<$>))
+import Course.Functor
 import Course.List
 import Course.Optional
 import qualified Prelude as P(fmap, return, (>>=))
 
--- | All instances of the `Applicative` type-class must satisfy three laws.
+-- | All instances of the `Applicative` type-class must satisfy four laws.
 -- These laws are not checked by the compiler. These laws are given as:
 --
--- * The law of associative composition
---   `∀a b c. ((.) <$> a <*> b <*> c) ≅ (a <*> (b <*> c))`
+-- * The law of identity
+--   `∀x. pure id <*> x = x`
 --
--- * The law of left identity
---   `∀x. pure id <*> x ≅ x`
+-- * The law of composition
+--   `∀u v w. pure (.) <*> u <*> v <*> w = u <*> (v <*> w)`
 --
--- * The law of right identity
---   `∀x. x <*> pure id ≅ x`
+-- * The law of homomorphism
+--   `∀f x. pure f <*> pure x = pure (f x)`
+--
+-- * The law of interchange
+--   `∀u y. u <*> pure y = pure ($ y) <*> u`
+
 class Functor f => Applicative f where
   pure ::
     a -> f a
@@ -46,27 +37,9 @@ class Functor f => Applicative f where
 
 infixl 4 <*>
 
--- | Witness that all things with (<*>) and pure also have (<$>).
---
--- >>> (+1) <$> (ExactlyOne 2)
--- ExactlyOne 3
---
--- >>> (+1) <$> Nil
--- []
---
--- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
--- [2,3,4]
-(<$>) ::
-  Applicative f =>
-  (a -> b)
-  -> f a
-  -> f b
-(<$>) =
-  (<*>) . pure
-
 -- | Insert into ExactlyOne.
 --
--- prop> pure x == ExactlyOne x
+-- prop> \x -> pure x == ExactlyOne x
 --
 -- >>> ExactlyOne (+10) <*> ExactlyOne 8
 -- ExactlyOne 18
@@ -75,17 +48,17 @@ instance Applicative ExactlyOne where
     a
     -> ExactlyOne a
   pure =
-    ExactlyOne
-  (<*>) :: 
+    error "todo: Course.Applicative pure#instance ExactlyOne"
+  (<*>) ::
     ExactlyOne (a -> b)
     -> ExactlyOne a
     -> ExactlyOne b
-  ExactlyOne f <*> ExactlyOne a =
-    ExactlyOne (f a)
+  (<*>) =
+    error "todo: Course.Applicative (<*>)#instance ExactlyOne"
 
 -- | Insert into a List.
 --
--- prop> pure x == x :. Nil
+-- prop> \x -> pure x == x :. Nil
 --
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
 -- [2,3,4,2,4,6]
@@ -94,17 +67,17 @@ instance Applicative List where
     a
     -> List a
   pure =
-    (:. Nil)
+    error "todo: Course.Applicative pure#instance List"
   (<*>) ::
     List (a -> b)
     -> List a
     -> List b
-  f <*> a =
-    flatMap (`map` a) f
+  (<*>) =
+    error "todo: Course.Apply (<*>)#instance List"
 
 -- | Insert into an Optional.
 --
--- prop> pure x == Full x
+-- prop> \x -> pure x == Full x
 --
 -- >>> Full (+8) <*> Full 7
 -- Full 15
@@ -119,13 +92,13 @@ instance Applicative Optional where
     a
     -> Optional a
   pure =
-    Full
+    error "todo: Course.Applicative pure#instance Optional"
   (<*>) ::
     Optional (a -> b)
     -> Optional a
     -> Optional b
-  f <*> a =
-    bindOptional (`mapOptional` a) f
+  (<*>) =
+    error "todo: Course.Apply (<*>)#instance Optional"
 
 -- | Insert into a constant function.
 --
@@ -144,19 +117,20 @@ instance Applicative Optional where
 -- >>> ((*) <*> (+2)) 3
 -- 15
 --
--- prop> pure x y == x
+-- prop> \x y -> pure x y == x
 instance Applicative ((->) t) where
   pure ::
     a
     -> ((->) t a)
   pure =
-    const
+    error "todo: Course.Applicative pure#((->) t)"
   (<*>) ::
     ((->) t (a -> b))
     -> ((->) t a)
     -> ((->) t b)
-  f <*> g =
-    \t -> f t (g t)
+  (<*>) =
+    error "todo: Course.Apply (<*>)#instance ((->) t)"
+
 
 -- | Apply a binary function in the environment.
 --
@@ -183,10 +157,11 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 f a b =
-  f <$> a <*> b
+lift2 =
+  error "todo: Course.Applicative#lift2"
 
 -- | Apply a ternary function in the environment.
+-- /can be written using `lift2` and `(<*>)`./
 --
 -- >>> lift3 (\a b c -> a + b + c) (ExactlyOne 7) (ExactlyOne 8) (ExactlyOne 9)
 -- ExactlyOne 24
@@ -215,10 +190,11 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 f a b c =
-  lift2 f a b <*> c
+lift3 =
+  error "todo: Course.Applicative#lift3"
 
 -- | Apply a quaternary function in the environment.
+-- /can be written using `lift3` and `(<*>)`./
 --
 -- >>> lift4 (\a b c d -> a + b + c + d) (ExactlyOne 7) (ExactlyOne 8) (ExactlyOne 9) (ExactlyOne 10)
 -- ExactlyOne 34
@@ -248,8 +224,35 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 f a b c d =
-  lift3 f a b c <*> d
+lift4 =
+  error "todo: Course.Applicative#lift4"
+
+-- | Apply a nullary function in the environment.
+lift0 ::
+  Applicative f =>
+  a
+  -> f a
+lift0 =
+  error "todo: Course.Applicative#lift0"
+
+-- | Apply a unary function in the environment.
+-- /can be written using `lift0` and `(<*>)`./
+--
+-- >>> lift1 (+1) (ExactlyOne 2)
+-- ExactlyOne 3
+--
+-- >>> lift1 (+1) Nil
+-- []
+--
+-- >>> lift1 (+1) (1 :. 2 :. 3 :. Nil)
+-- [2,3,4]
+lift1 ::
+  Applicative f =>
+  (a -> b)
+  -> f a
+  -> f b
+lift1 =
+  error "todo: Course.Applicative#lift1"
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
@@ -266,16 +269,16 @@ lift4 f a b c d =
 -- >>> Full 7 *> Full 8
 -- Full 8
 --
--- prop> (a :. b :. c :. Nil) *> (x :. y :. z :. Nil) == (x :. y :. z :. x :. y :. z :. x :. y :. z :. Nil)
+-- prop> \a b c x y z -> (a :. b :. c :. Nil) *> (x :. y :. z :. Nil) == (x :. y :. z :. x :. y :. z :. x :. y :. z :. Nil)
 --
--- prop> Full x *> Full y == Full y
+-- prop> \x y -> Full x *> Full y == Full y
 (*>) ::
   Applicative f =>
   f a
   -> f b
   -> f b
 (*>) =
-  lift2 (const id)
+  error "todo: Course.Applicative#(*>)"
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -292,16 +295,16 @@ lift4 f a b c d =
 -- >>> Full 7 <* Full 8
 -- Full 7
 --
--- prop> (x :. y :. z :. Nil) <* (a :. b :. c :. Nil) == (x :. x :. x :. y :. y :. y :. z :. z :. z :. Nil)
+-- prop> \x y z a b c -> (x :. y :. z :. Nil) <* (a :. b :. c :. Nil) == (x :. x :. x :. y :. y :. y :. z :. z :. z :. Nil)
 --
--- prop> Full x <* Full y == Full x
+-- prop> \x y -> Full x <* Full y == Full x
 (<*) ::
   Applicative f =>
   f b
   -> f a
   -> f b
 (<*) =
-  lift2 const
+  error "todo: Course.Applicative#(<*)"
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -324,9 +327,11 @@ sequence ::
   List (f a)
   -> f (List a)
 sequence =
-  foldRight (lift2 (:.)) (pure Nil)
+  error "todo: Course.Applicative#sequence"
 
 -- | Replicate an effect a given number of times.
+--
+-- /Tip:/ Use `Course.List#replicate`.
 --
 -- >>> replicateA 4 (ExactlyOne "hi")
 -- ExactlyOne ["hi","hi","hi","hi"]
@@ -347,8 +352,8 @@ replicateA ::
   Int
   -> f a
   -> f (List a)
-replicateA n =
-  sequence . replicate n
+replicateA =
+  error "todo: Course.Applicative#replicateA"
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -375,8 +380,8 @@ filtering ::
   (a -> f Bool)
   -> List a
   -> f (List a)
-filtering p =
-  foldRight (\a -> lift2 (\b -> if b then (a:.) else id) (p a)) (pure Nil)
+filtering =
+  error "todo: Course.Applicative#filtering"
 
 -----------------------
 -- SUPPORT LIBRARIES --

@@ -3,14 +3,9 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Course.Monad(
-  Monad(..)
-, join
-, (>>=)  
-, (<=<)
-) where
+module Course.Monad where
 
-import Course.Applicative hiding ((<*>))
+import Course.Applicative
 import Course.Core
 import Course.ExactlyOne
 import Course.Functor
@@ -32,47 +27,6 @@ class Applicative f => Monad f where
 
 infixr 1 =<<
 
--- | Witness that all things with (=<<) and (<$>) also have (<*>).
---
--- >>> ExactlyOne (+10) <*> ExactlyOne 8
--- ExactlyOne 18
---
--- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
--- [2,3,4,2,4,6]
---
--- >>> Full (+8) <*> Full 7
--- Full 15
---
--- >>> Empty <*> Full 7
--- Empty
---
--- >>> Full (+8) <*> Empty
--- Empty
---
--- >>> ((+) <*> (+10)) 3
--- 16
---
--- >>> ((+) <*> (+5)) 3
--- 11
---
--- >>> ((+) <*> (+5)) 1
--- 7
---
--- >>> ((*) <*> (+10)) 3
--- 39
---
--- >>> ((*) <*> (+2)) 3
--- 15
-(<*>) ::
-  Monad f =>
-  f (a -> b)
-  -> f a
-  -> f b
-f <*> a =
-  (\f' -> return . f' =<< a) =<< f
-
-infixl 4 <*>
-
 -- | Binds a function on the ExactlyOne monad.
 --
 -- >>> (\x -> ExactlyOne(x+1)) =<< ExactlyOne 2
@@ -82,8 +36,8 @@ instance Monad ExactlyOne where
     (a -> ExactlyOne b)
     -> ExactlyOne a
     -> ExactlyOne b
-  f =<< ExactlyOne a =
-    f a
+  (=<<) =
+    error "todo: Course.Monad (=<<)#instance ExactlyOne"
 
 -- | Binds a function on a List.
 --
@@ -95,7 +49,7 @@ instance Monad List where
     -> List a
     -> List b
   (=<<) =
-    flatMap
+    error "todo: Course.Monad (=<<)#instance List"
 
 -- | Binds a function on an Optional.
 --
@@ -107,7 +61,7 @@ instance Monad Optional where
     -> Optional a
     -> Optional b
   (=<<) =
-    bindOptional
+    error "todo: Course.Monad (=<<)#instance Optional"
 
 -- | Binds a function on the reader ((->) t).
 --
@@ -118,8 +72,49 @@ instance Monad ((->) t) where
     (a -> ((->) t b))
     -> ((->) t a)
     -> ((->) t b)
-  f =<< g =
-    \t -> f (g t) t
+  (=<<) =
+    error "todo: Course.Monad (=<<)#instance ((->) t)"
+
+-- | Witness that all things with (=<<) and (<$>) also have (<*>).
+--
+-- >>> ExactlyOne (+10) <**> ExactlyOne 8
+-- ExactlyOne 18
+--
+-- >>> (+1) :. (*2) :. Nil <**> 1 :. 2 :. 3 :. Nil
+-- [2,3,4,2,4,6]
+--
+-- >>> Full (+8) <**> Full 7
+-- Full 15
+--
+-- >>> Empty <**> Full 7
+-- Empty
+--
+-- >>> Full (+8) <**> Empty
+-- Empty
+--
+-- >>> ((+) <**> (+10)) 3
+-- 16
+--
+-- >>> ((+) <**> (+5)) 3
+-- 11
+--
+-- >>> ((+) <**> (+5)) 1
+-- 7
+--
+-- >>> ((*) <**> (+10)) 3
+-- 39
+--
+-- >>> ((*) <**> (+2)) 3
+-- 15
+(<**>) ::
+  Monad f =>
+  f (a -> b)
+  -> f a
+  -> f b
+(<**>) =
+  error "todo: Course.Monad#(<**>)"
+
+infixl 4 <**>
 
 -- | Flattens a combined structure to a single structure.
 --
@@ -139,7 +134,7 @@ join ::
   f (f a)
   -> f a
 join =
-  (=<<) id
+  error "todo: Course.Monad#join"
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
@@ -152,8 +147,8 @@ join =
   f a
   -> (a -> f b)
   -> f b
-a >>= f =
-  join (f <$> a)
+(>>=) =
+  error "todo: Course.Monad#(>>=)"
 
 infixl 1 >>=
 
@@ -168,8 +163,8 @@ infixl 1 >>=
   -> (a -> f b)
   -> a
   -> f c
-f <=< g =
-  (=<<) f . g
+(<=<) =
+  error "todo: Course.Monad#(<=<)"
 
 infixr 1 <=<
 

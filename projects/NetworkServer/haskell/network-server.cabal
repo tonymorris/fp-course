@@ -8,17 +8,19 @@ copyright:          Copyright (C) 2013 National ICT Australia Limited 2013
 synopsis:           A network server
 category:           Education
 description:        A network server
-homepage:           https://github.com/NICTA/course
-bug-reports:        https://github.com/NICTA/course/issues
+homepage:           https://github.com/data61/fp-course
+bug-reports:        https://github.com/data61/fp-course/issues
 cabal-version:      >= 1.10
 build-type:         Custom
 
+custom-setup
+  setup-depends:    Cabal >= 1.24 && < 2
+                    , base >= 4.8 && < 5
+                    , filepath >= 1.4 && < 1.5
+
 source-repository   head
   type:             git
-  location:         git@github.com:NICTA/course.git
-
-flag                small_base
-  description:      Choose the new, split-up base package.
+  location:         git@github.com:data61/fp-course.git
 
 executable network-tictactoe
   default-language: Haskell2010
