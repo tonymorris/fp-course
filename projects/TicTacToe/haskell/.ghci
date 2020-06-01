@@ -1,0 +1,6 @@
+:set -isrc -idist/build/autogen
+:set -optP-include -optPdist/build/autogen/cabal_macros.h
+:load src/TicTacToe/Console.hs
+:set prompt ">> "
+:set -Wall
+

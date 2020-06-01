@@ -1,0 +1,22 @@
+*~
+*#*
+
+# CABAL
+/dist
+/.cabal-sandbox
+/cabal.sandbox.config
+
+# Haskell Program Coverage
+/.hpc
+/*.tix
+
+# Leksah
+*.lkshs
+
+# Intellij IDEA
+/.idea
+*.iml
+
+# ctags
+TAGS
+
