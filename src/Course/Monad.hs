@@ -112,9 +112,7 @@ instance Monad ((->) t) where
   -> f a
   -> f b
 f <**> a =
-  f >>= \f' ->
-  a >>= \a' ->
-  pure (f' a')
+  (<$> a) =<< f
 
 infixl 4 <**>
 
