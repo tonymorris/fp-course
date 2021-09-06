@@ -142,10 +142,12 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM _ Nil =
-  pure Empty
-findM p (h :. t) =
-  (\q -> if q then pure (Full h) else findM p t) =<< p h
+findM p =
+  foldRight
+    (\a foa ->
+        p a >>= \b ->
+            if b then pure (Full a) else foa
+        ) (pure Empty)
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
@@ -172,16 +174,16 @@ distinct ::
   List a
   -> List a
 distinct =
-  listWithState filtering S.notMember 
+  listWithState filtering S.notMember
 
-listWithState :: 
+listWithState ::
   Ord a1 =>
-  ((a1 -> State (S.Set a1) a2) 
-  -> t 
+  ((a1 -> State (S.Set a1) a2)
+  -> t
   -> State (S.Set a3) a)
-  -> (a1 -> S.Set a1 -> a2) 
-  -> t 
-  -> a 
+  -> (a1 -> S.Set a1 -> a2)
+  -> t
+  -> a
 listWithState f m x =
   eval (f (State . lift2 (lift2 (,)) m S.insert) x) S.empty
 
@@ -214,6 +216,6 @@ isHappy =
     firstRepeat .
     produce (toInteger .
              sum .
-             map (join (*) . 
+             map (join (*) .
                   digitToInt) .
              show')
