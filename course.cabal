@@ -52,6 +52,7 @@ library
   exposed-modules:    Course
                       Course.Anagrams
                       Course.Applicative
+                      Course.Alternative
                       Course.Cheque
                       Course.Comonad
                       Course.Compose

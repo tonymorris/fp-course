@@ -114,7 +114,6 @@ instance Alternative Parser where
     Parser a
   zero =
     P (\_ -> UnexpectedEof)
-
   (<|>) ::
     Parser a
     -> Parser a
@@ -184,5 +183,5 @@ some ka =
 --
 -- /Note:/ In the standard library, this function is called @asum@
 aconcat :: Alternative k => List (k a) -> k a
-aconcat kas =
-  foldRight (<|>) zero kas
+aconcat =
+  foldRight (<|>) zero 
