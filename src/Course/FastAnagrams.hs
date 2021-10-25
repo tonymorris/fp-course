@@ -14,8 +14,11 @@ fastAnagrams ::
   Chars
   -> FilePath
   -> IO (List Chars)
-fastAnagrams name f =
-  (flip (filter . flip S.member) (permutations name) . S.fromList . hlist . lines) <$> readFile f
+fastAnagrams name =
+    (elems . S.intersection (fromList (permutations name)) . fromList . lines <$>) . readFile
+  where
+    fromList = S.fromList . hlist . map NoCaseString
+    elems = map ncString . listh . S.elems
 
 newtype NoCaseString =
   NoCaseString {
@@ -24,6 +27,10 @@ newtype NoCaseString =
 
 instance Eq NoCaseString where
   (==) = (==) `on` map toLower . ncString
+
+instance Ord NoCaseString where
+  compare =
+    compare `on` map toLower . ncString
 
 instance Show NoCaseString where
   show = show . ncString
