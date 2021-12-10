@@ -489,15 +489,11 @@ moveLeftN' ::
   Int
   -> ListZipper a
   -> Either Int (ListZipper a)
-moveLeftN' n z =
-  let moveLeftN'' n' z' q
-          | n' == 0 = Right z'
-          | n' < 0 = moveRightN' (negate n') z
-          | otherwise =
-            case moveLeft z' of
-                IsZ zz -> moveLeftN'' (n' - 1) zz (q + 1)
-                IsNotZ -> Left q
-  in moveLeftN'' n z 0
+moveLeftN' n z 
+  | n < 0     = moveRightN' (negate n) z
+  | otherwise = case moveLeftN n z of
+      IsZ zz -> Right zz
+      IsNotZ -> Left $ length (lefts z)
 
 -- | Move the focus right the given number of positions. If the value is negative, move left instead.
 -- If the focus cannot be moved, the given number of times, return the value by which it can be moved instead.
@@ -520,15 +516,11 @@ moveRightN' ::
   Int
   -> ListZipper a
   -> Either Int (ListZipper a)
-moveRightN' n z =
-  let moveRightN'' n' z' q
-          | n' == 0 = Right z'
-          | n' < 0 = moveLeftN' (negate n') z
-          | otherwise =
-            case moveRight z' of
-                IsZ zz -> moveRightN'' (n' - 1) zz (q + 1)
-                IsNotZ -> Left q
-  in moveRightN'' n z 0
+moveRightN' n z 
+  | n < 0     = moveLeftN' (negate n) z
+  | otherwise = case moveRightN n z of
+      IsZ zz -> Right zz
+      IsNotZ -> Left $ length (rights z)
 
 -- | Move the focus to the given absolute position in the zipper. Traverse the zipper only to the extent required.
 --
@@ -544,14 +536,13 @@ nth ::
   Int
   -> ListZipper a
   -> MaybeListZipper a
-nth i z =
-  if i < 0
-    then
-      IsNotZ
-    else
-      case moveLeftN' i z of
-             Left a -> moveRightN (i-a) z
-             Right (ListZipper l _ _) -> moveLeftN (length l) z
+nth n z
+  | n < 0  = IsNotZ
+  | v == 0 = IsZ z
+  | v < 0  = moveLeftN (negate v) z
+  | otherwise = moveRightN v z
+  where
+    v = n - index z
 
 -- | Return the absolute position of the current focus in the zipper.
 --
@@ -562,8 +553,8 @@ nth i z =
 index ::
   ListZipper a
   -> Int
-index (ListZipper l _ _) =
-  length l
+index = length . lefts
+
 
 -- | Move the focus to the end of the zipper.
 --
