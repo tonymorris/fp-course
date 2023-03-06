@@ -383,7 +383,7 @@ notReverse =
 -- We note that
 -- notReverse Nil = Nil = reverse Nil                      -- using Eq. 5, defn of reverse
 -- notReverse (x :. Nil) = (x :. Nil) = reverse (x :. Nil) -- using Eq. 2, defn of reverse
--- notReverse (x :. y :. Nil) = (y :. x :. Nil)            -- using Eq. 1
+-- notReverse (x :. y :. Nil) = (y :. x :. Nil)            -- using Eq. 8'
 --                            = reverse (x :. y :. Nil)    -- defn of reverse
 -- i.e., notReverse is equal to reverse for cases when 'List a' has 0,
 -- 1, and 2 elements.
